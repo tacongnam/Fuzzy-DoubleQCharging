@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
-# A Double Q-learning based charging strategy with Kmeans network clustering on Wireless Rechargeable Sensor Network
+# A Q-learning based charging strategy with Kmeans network clustering on Wireless Rechargeable Sensor Network
 
 
 ## About the Project 

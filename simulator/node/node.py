@@ -59,6 +59,7 @@ class Node:
             p_theory = para.alpha / (d + para.beta) ** 2
             p_actual = min(self.energy_max - self.energy, p_theory)
             self.energy = self.energy + p_actual
+            self.charged_energy += p_actual
             return p_actual
         else:
             return 0
