@@ -65,4 +65,3 @@ def load_network(network=None):
         node_writer = csv.DictWriter(information_log, fieldnames=['id', 'location', 'used energy', 'avg energy', 'charged energy'])
         for row in nodes_info:
             node_writer.writerow(row)
-    continue
