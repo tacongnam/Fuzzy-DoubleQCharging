@@ -1,0 +1,68 @@
+import random
+import pickle
+
+from simulator.network.package import Package
+
+
+def uniform_com_func(net):
+    for node in net.node:
+        if node.id in net.target and random.random() <= node.prob and node.is_active:
+            package = Package(package_size=net.package_size)
+            node.send(net, package)
+            # print(package.path)
+    return True
+
+
+def to_string(net):
+    min_energy = 10 ** 10
+    min_node = -1
+    for node in net.node:
+        if node.energy < min_energy:
+            min_energy = node.energy
+            min_node = node
+    min_node.print_node()
+
+
+def count_package_function(net):
+    count = 0
+    for target_id in net.target:
+        package = Package(is_energy_info=True)
+        net.node[target_id].send(net, package)
+        if package.path[-1] == -1:
+            count += 1
+    return count
+
+def set_checkpoint(t=0, network=None, optimizer=None, dead_time=0):
+    exp_index = int(network.experiment.split('_')[1])
+    exp_type = network.experiment.split('_')[0]
+    nb_run = int(network.experiment.split('_')[2])
+    checkpoint = {
+        'time'              : t,
+        'experiment_type'   : exp_type,
+        'experiment_index'  : exp_index,
+        'nb_run'            : nb_run,
+        'network'           : network,
+        'optimizer'         : optimizer,
+        'dead_time'         : dead_time
+    }
+    with open('checkpoint/checkpoint_{}_{}.pkl'.format(exp_type, exp_index), 'wb') as f:
+        pickle.dump(checkpoint, f)
+    print("[Simulator] Simulation checkpoint set at {}s".format(t))
+
+def load_network(network=None):
+    nodes_info = []
+    for node in netowrk.node:
+        node_info = {
+            'id': node.id,
+            'location': node.location,
+            'used energy': node.actual_used_energy,
+            'avg energy': node.avg_energy,
+            'charged energy': node.charged_energy
+        }
+        nodes_info.append(node_info)
+
+    with open("log/energy_log.csv", 'a') as information_log:
+        node_writer = csv.DictWriter(information_log, fieldnames=['id', 'location', 'used energy', 'avg energy', 'charged energy'])
+        for row in nodes_info:
+            node_writer.writerow(row)
+    continue
