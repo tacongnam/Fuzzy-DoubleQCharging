@@ -51,7 +51,7 @@ def set_checkpoint(t=0, network=None, optimizer=None, dead_time=0):
 
 def load_network(network=None):
     nodes_info = []
-    for node in netowrk.node:
+    for node in network.node:
         node_info = {
             'id': node.id,
             'location': node.location,
