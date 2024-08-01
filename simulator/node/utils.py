@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.spatial import distance
-
 from simulator.network import parameter as para
 
 
@@ -41,14 +40,22 @@ def find_receiver(node, net):
     """
     if not node.is_active:
         return -1
-    candidate = [neighbor_id for neighbor_id in node.neighbor if
-                 net.node[neighbor_id].level < node.level and net.node[neighbor_id].is_active]
-    if candidate:
-        d = [distance.euclidean(net.node[candidate_id].location, para.base) for candidate_id in candidate]
-        id_min = np.argmin(d)
-        return candidate[id_min]
-    else:
+
+    neighbor_ids = np.array([nid for nid in node.neighbor 
+        if net.node[nid].level < node.level and net.node[nid].is_active])
+    
+     if neighbor_ids.size == 0:
         return -1
+
+    base_location = np.array(para.base)
+    
+    distances = np.array([
+        distance.euclidean(net.node[nid].location, base_location) 
+        for nid in neighbor_ids
+    ])
+    
+    nearest_index = np.argmin(distances)
+    return neighbor_ids[nearest_index]
 
 
 def request_function(node, optimizer, t):

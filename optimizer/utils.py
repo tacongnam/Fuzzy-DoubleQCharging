@@ -11,26 +11,30 @@ from skfuzzy import control as ctrl
 # Modules
 from simulator.network import parameter as para
 from simulator.node.utils import find_receiver
+from optimizer.fuzzy_controller import FuzzyController
 
+fuzzy_controller = FuzzyController(network)
 
 def q_max_function(q_table, state):
-    temp = [max(row) if index != state else -float("inf") for index, row in enumerate(q_table)]
-    return np.asarray(temp)
-
+    temp = np.max(q_table, axis=1)
+    temp[state] = -np.inf
+    return temp
 
 def reward_function(network, mc, q_learning, state, time_stem, receive_func=find_receiver):
     alpha = q_learning.alpha
     charging_time = get_charging_time(network, mc, q_learning, time_stem=time_stem, state=state, alpha=alpha)
     w, nb_target_alive = get_weight(network, mc, q_learning, state, charging_time, receive_func)
-    p = get_charge_per_sec(network, q_learning, state)
-    p_hat = p / np.sum(p)
+    p = get_charge_per_2sec(network, q_learning, state)
+
     E = np.asarray([network.node[request["id"]].energy for request in q_learning.list_request])
     e = np.asarray([request["avg_energy"] for request in q_learning.list_request])
-    second = nb_target_alive / len(network.target)
-    third = np.sum(w * p_hat)
-    first = np.sum(e * p / E)
-    return first, second, third, charging_time
 
+    p_hat = p / np.sum(p)
+    first = np.sum(e * p / E)
+    second = nb_target_alive / len(network.target)
+    third = np.dot(w, p_hat)
+
+    return first, second, third, charging_time
 
 def init_function(nb_action=81):
     return np.zeros((nb_action + 1, nb_action + 1), dtype=float)
@@ -46,13 +50,12 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
            (p[request_id] - request["avg_energy"]) * charging_time < 0
     ]
 
-    node_to_weight = {}
-    for request_id, request in enumerate(q_learning.list_request):
-        node_to_weight[request["id"]] = sum(request["id"] in path for path in all_path)
+    node_to_weight = {req["id"]: sum(req["id"] in path for path in all_path) 
+                      for req in q_learning.list_request}
     
     w = np.array([node_to_weight.get(request["id"], 0) for request in q_learning.list_request])
-    total_weight = np.sum(w) + len(w) * 10 ** -3
-    w = (w + 10 ** -3) / total_weight
+    total_weight = np.sum(w) + len(w) * 1e-3
+    w = (w + 1e-3) / total_weight
     
     nb_target_alive = sum(
         para.base in path and not set(list_dead).intersection(path)
@@ -79,128 +82,65 @@ def get_all_path(net, receive_func=find_receiver):
     return list_path
 
 
-def get_charge_per_sec(net, q_learning, state):
+def get_charge_per_2sec(net, q_learning, state):
     return np.asarray(
-        [para.alpha / (distance.euclidean(net.node[request["id"]].location,
+        [2 * para.alpha / (distance.euclidean(net.node[request["id"]].location,
                                           q_learning.action_list[state]) + para.beta) ** 2 for
          request in q_learning.list_request])
-
-def compute_fuzzy_values(network, q_learning, state):
-    # Compute Fuzzy Logic
-    E_min = ctrl.Antecedent(np.linspace(0, 10, num=1001), 'E_min')
-    L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
-    Theta = ctrl.Consequent(np.linspace(0, 1, num=101), 'Theta')
-    
-    L_r['L'] = fuzz.trapmf(L_r.universe, [0, 0, 2, 6])
-    L_r['M'] = fuzz.trimf(L_r.universe, [2, 6, 10])
-    L_r['H'] = fuzz.trapmf(L_r.universe, [6, 10, len(network.node), len(network.node)])
-    
-    E_min['L'] = fuzz.trapmf(E_min.universe, [0, 0, 2.5, 5])
-    E_min['M'] = fuzz.trimf(E_min.universe, [2.5, 5.0, 7.5])
-    E_min['H'] = fuzz.trapmf(E_min.universe, [5, 7.5, 10, 10])
-    
-    Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/10])
-    Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/10, 2/10])
-    Theta['M'] = fuzz.trimf(Theta.universe, [1/10, 2/10, 3/10])
-    Theta['H'] = fuzz.trimf(Theta.universe, [2/10, 3/10, 4/10])
-    
-    rules = [
-        ctrl.Rule(L_r['L'] & E_min['L'], Theta['H']),
-        ctrl.Rule(L_r['L'] & E_min['M'], Theta['M']),
-        ctrl.Rule(L_r['L'] & E_min['H'], Theta['L']),
-        ctrl.Rule(L_r['M'] & E_min['L'], Theta['M']),
-        ctrl.Rule(L_r['M'] & E_min['M'], Theta['L']),
-        ctrl.Rule(L_r['M'] & E_min['H'], Theta['VL']),
-        ctrl.Rule(L_r['H'] & E_min['L'], Theta['L']),
-        ctrl.Rule(L_r['H'] & E_min['M'], Theta['VL']),
-        ctrl.Rule(L_r['H'] & E_min['H'], Theta['VL']),
-    ]
-    
-    FLCDS_ctrl = ctrl.ControlSystem(rules)
-    FLCDS = ctrl.ControlSystemSimulation(FLCDS_ctrl)
-    
-    L_r_crisp = len(q_learning.list_request)
-    E_min_crisp = network.node[network.find_min_node()].energy
-    
-    FLCDS.input['L_r'] = L_r_crisp
-    FLCDS.input['E_min'] = E_min_crisp
-    FLCDS.compute()
-    
-    alpha = FLCDS.output['Theta']
-    q_learning.alpha = alpha
-
-    return alpha
 
 def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1):
     # request_id = [request["id"] for request in network.mc.list_request]
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
-    alpha = compute_fuzzy_values(network, q_learning, state)
+    alpha = fuzzy_controller.compute_fuzzy_values(network, q_learning, state)
 
-    # energy_min = network.node[0].energy_thresh (1 - a) + alpha * network.node[0].energy_max
     energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
-    s1 = []  # list of node in request list which has positive charge
-    s2 = []  # list of node not in request list which has negative charge
-    node_ids = {node.id: node for node in network.node}
-    node_locations = {node.id: node.location for node in network.node}
 
-    def calculate_p1(node, other_mc_list, time_stem):
-        p1 = 0
-        for other_mc in other_mc_list:
-            if other_mc.id != mc.id:
-                if other_mc.get_status() == "charging":
-                    d = distance.euclidean(other_mc.current, node.location)
-                    p1 += (para.alpha / (d + para.beta) ** 2) * (other_mc.end_time - time_stem)
-                elif other_mc.get_status() == "moving" and other_mc.state != len(q_learning.q_table) - 1:
-                    d = distance.euclidean(other_mc.end, node.location)
-                    p1 += (para.alpha / (d + para.beta) ** 2) * (other_mc.end_time - other_mc.arrival_time)
-        return p1
+    locations = np.array([node.location for node in network.node])
+    energies = np.array([node.energy for node in network.node])
+    avg_energies = np.array([node.avg_energy for node in network.node])
 
-    for node in network.node:
-        d = distance.euclidean(q_learning.action_list[state], node.location)
-        p = para.alpha / (d + para.beta) ** 2
-        p1 = calculate_p1(node, network.mc_list, time_stem)
-        
-        if node.energy - time_move * node.avg_energy + p1 < energy_min and p - node.avg_energy > 0:
-            s1.append((node.id, p, p1))
-        if node.energy - time_move * node.avg_energy + p1 > energy_min and p - node.avg_energy < 0:
-            s2.append((node.id, p, p1))
-    
-    def calculate_dead_nodes(t):
-        dead_list = []
-        for item in t:
-            nb_dead = sum(
-                1 for node_id, p, p1 in s1 + s2
-                if network.node[node_id].energy - time_move * network.node[node_id].avg_energy + p1 + (p - network.node[node_id].avg_energy) * item < energy_min
-            )
-            dead_list.append(nb_dead)
-        return dead_list
+    action_location = np.array(q_learning.action_list[state])
+    distances = np.linalg.norm(locations - action_location, axis=1)
+    p = para.alpha / (distances + para.beta) ** 2
 
-    t = [(energy_min - network.node[index].energy + time_move * network.node[index].avg_energy - p1) / (p - network.node[index].avg_energy)
-         for index, p, p1 in s1 + s2]
+    p1 = np.zeros(len(network.node))
+
+    for other_mc in network.mc_list:
+        if other_mc.id != mc.id:
+            if other_mc.get_status() == "charging":
+                d = np.linalg.norm(locations - other_mc.current, axis=1)
+                p1 += (para.alpha / (d + para.beta) ** 2) * (other_mc.end_time - time_stem)
+            elif other_mc.get_status() == "moving" and other_mc.state != len(q_learning.q_table) - 1:
+                d = np.linalg.norm(locations - other_mc.end, axis=1)
+                p1 += (para.alpha / (d + para.beta) ** 2) * (other_mc.end_time - other_mc.arrival_time)
+
+    s1_mask = (energies - time_move * avg_energies + p1 < energy_min) & (p - avg_energies > 0)
+    s2_mask = (energies - time_move * avg_energies + p1 > energy_min) & (p - avg_energies < 0)
+    s1_s2_id = np.where(s1_mask | s2_mask)[0]
+
+    t = (energy_min - energies[s1_s2_id] + time_move * avg_energies[s1_s2_id] - p1[s1_s2_id]) / (p[s1_s2_id] - avg_energies[s1_s2_id])
+
+    def calculate_dead_nodes(t_values):
+        return np.array([
+            np.sum(energies[s1_s2_id] - time_move * avg_energies[s1_s2_id] + p1[s1_s2_id] + (p[s1_s2_id] - avg_energies[s1_s2_id]) * t_val < energy_min)
+            for t_val in t_values
+        ])
 
     dead_list = calculate_dead_nodes(t)
-    if dead_list:
-        arg_min = np.argmin(dead_list)
-        return t[arg_min]
+    if dead_list.size > 0:
+        return t[np.argmin(dead_list)]
     return 0
 
 def network_clustering(optimizer, network=None, nb_cluster=81):
-    X = []
-    Y = []
-    for node in network.node:
-        node.set_check_point(200)
-        X.append(node.location)
-        Y.append(node.avg_energy**0.5)
-    X = np.array(X)
-    Y = np.array(Y)
-    # print(Y)
-    d = np.linalg.norm(Y)
-    Y = Y/d
+    X = np.array([node.location for node in network.node])
+    Y = np.array([node.avg_energy**0.5 for node in network.node])
+
+    Y /= np.linalg.norm(Y)
     kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X, sample_weight=Y)
-    charging_pos = []
-    for pos in kmeans.cluster_centers_:
-        charging_pos.append((int(pos[0]), int(pos[1])))
+    
+    charging_pos = [tuple(map(int, pos)) for pos in kmeans.cluster_centers_]
     charging_pos.append(para.depot)
+
     # print(charging_pos, file=open('log/centroid.txt', 'w'))
     node_distribution_plot(network=network, charging_pos=charging_pos)
     network_plot(network=network, charging_pos=charging_pos)

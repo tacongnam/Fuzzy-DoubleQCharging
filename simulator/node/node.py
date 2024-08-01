@@ -50,7 +50,7 @@ class Node:
 
     def charge(self, mc):
         """
-        charging to sensor
+        charging to sensor - 2 seconds
         :param mc: mobile charger
         :return: the amount of energy mc charges to this sensor
         """
@@ -58,15 +58,15 @@ class Node:
             d = distance.euclidean(self.location, mc.current)
             p_theory = para.alpha / (d + para.beta) ** 2
             p_actual = min(self.energy_max - self.energy, p_theory)
-            self.energy = self.energy + p_actual
-            self.charged_energy += p_actual
-            return p_actual
+            self.energy = self.energy + 2 * p_actual
+            self.charged_energy += 2 * p_actual
+            return 2 * p_actual
         else:
             return 0
 
     def send(self, net=None, package=None, receiver=find_receiver, is_energy_info=False):
         """
-        send package
+        send package - 2 times / 2 seconds
         :param package:
         :param net: the network
         :param receiver: the function calculate receiver node
@@ -103,7 +103,7 @@ class Node:
 
     def receive(self, package):
         """
-        receive package from other node
+        receive package from other node 2 times / 2 seconds
         :param package: size of package
         :return: reduce energy of this node
         """

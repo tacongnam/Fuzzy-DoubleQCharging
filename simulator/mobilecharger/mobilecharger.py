@@ -45,53 +45,67 @@ class MobileCharger:
         func(self, net, node)
 
     def self_charge(self):
-        self.energy = min(self.energy + self.e_self_charge, self.capacity)
+        self.energy = min(self.energy + 2 * self.e_self_charge, self.capacity)
 
     def check_state(self):
-        if distance.euclidean(self.current, self.end) < 1:
-            self.is_stand = True
+        current = np.array(self.current)
+        end = np.array(self.end)
+        depot = np.array(para.depot)
+    
+        distance_to_end = distance.euclidean(current, end)
+        distance_to_depot = distance.euclidean(end, depot)
+    
+        self.is_stand = distance_to_end < 1
+        self.is_self_charge = distance_to_depot < 1e-3
+
+        if self.is_stand:
             self.current = self.end
-        else:
-            self.is_stand = False
-        if distance.euclidean(para.depot, self.end) < 10 ** -3:
-            self.is_self_charge = True
-        else:
-            self.is_self_charge = False
 
     def get_next_location(self, network, time_stem, optimizer=None):
         next_location, charging_time = optimizer.update(self, network, time_stem)
         self.start = self.current
         self.end = next_location
-        self.moving_time = distance.euclidean(self.start, self.end) / self.velocity
+        distance_move = distance.euclidean(self.start, self.end)
+        self.moving_time = distance_move / self.velocity
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
-        print("[Mobile Charger] MC #{} moves to {} in {}s and charges for {}s".format(self.id, self.end, self.moving_time, charging_time))
-        with open(network.mc_log_file, "a") as mc_log_file:
-            writer = csv.DictWriter(mc_log_file, fieldnames=['time_stamp', 'id', 'starting_point', 'destination_point', 'decision_id', 'charging_time', 'moving_time'])
-            mc_info = {
-                'time_stamp' : time_stem,
-                'id' : self.id,
-                'starting_point' : self.start,
-                'destination_point' : self.end,
-                'decision_id' : self.state,
-                'charging_time' : charging_time,
-                'moving_time' : self.moving_time
-            }
+
+        print(f"[Mobile Charger] MC #{self.id} moves to {self.end} in {self.moving_time:.2f}s and charges for {charging_time:.2f}s")
+
+        mc_info = {
+            'time_stamp': time_stem,
+            'id': self.id,
+            'starting_point': self.start,
+            'destination_point': self.end,
+            'decision_id': self.state,
+            'charging_time': charging_time,
+            'moving_time': self.moving_time
+        }
+
+        with open(network.mc_log_file, "a", newline='') as mc_log_file:
+            writer = csv.DictWriter(mc_log_file, fieldnames=mc_info.keys())
+            if mc_log_file.tell() == 0:  # Nếu file trống, viết tiêu đề
+                writer.writeheader()
             writer.writerow(mc_info)
 
     def run(self, network, time_stem, net=None, optimizer=None):
         # print(self.energy, self.start, self.end, self.current)
         if ((not self.is_active) and optimizer.list_request) or abs(time_stem - self.end_time) < 1:
             self.is_active = True
-            new_list_request = []
-            for request in optimizer.list_request:
-                if net.node[request["id"]].energy < net.node[request["id"]].energy_thresh:
-                    new_list_request.append(request)
-                else:
-                    net.node[request["id"]].is_request = False
-            optimizer.list_request = new_list_request
+
+            # Lọc yêu cầu không còn hợp lệ
+            node_energies = np.array([net.node[req["id"]].energy for req in optimizer.list_request])
+            node_thresholds = np.array([net.node[req["id"]].energy_thresh for req in optimizer.list_request])
+            valid_requests = node_energies < node_thresholds
+
+            optimizer.list_request = [req for req, valid in zip(optimizer.list_request, valid_requests) if valid]
+            for req, valid in zip(optimizer.list_request, valid_requests):
+                if not valid:
+                    net.node[req["id"]].is_request = False
+
             if not optimizer.list_request:
                 self.is_active = False
+
             self.get_next_location(network=network, time_stem=time_stem, optimizer=optimizer)
         else:
             if self.is_active:
@@ -104,6 +118,7 @@ class MobileCharger:
                 else:
                     # print("self charging")
                     self.self_charge()
+
         if self.energy < para.E_mc_thresh and not self.is_self_charge and self.end != para.depot:
             self.start = self.current
             self.end = para.depot

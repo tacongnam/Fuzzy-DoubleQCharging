@@ -4,7 +4,6 @@ from scipy.spatial import distance
 from optimizer.utils import init_function, q_max_function, reward_function, network_clustering, network_clustering_v2
 from simulator.node.utils import find_receiver
 
-
 class Q_learningv2:
     def __init__(self, init_func=init_function, nb_action=80, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
         self.action_list = []
@@ -30,16 +29,12 @@ class Q_learningv2:
 
         if np.random.rand() < 0.5:
             optimal_future = self.q_max(mc, self.q2, q_max_func)
-            for i in range(self.len + 1):
-                self.q1[mc.state][i] += self.q_alpha * (self.reward[i] + self.q_gamma * self.q2[i][optimal_future[i]] - self.q1[mc.state][i])
+            self.q1[mc.state] += self.q_alpha * (self.reward + self.q_gamma * optimal_future - self.q1[mc.state])
         else:
             optimal_future = self.q_max(mc, self.q1, q_max_func)
-            for i in range(self.len + 1):
-                self.q2[mc.state][i] += self.q_alpha * (self.reward[i] + self.q_gamma * self.q1[i][optimal_future[i]] - self.q2[mc.state][i])
+            self.q2[mc.state] += self.q_alpha * (self.reward + self.q_gamma * optimal_future - self.q2[mc.state])
 
         self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
-
-        # print(self.q_table)
 
         self.choose_next_state(mc, network)
         if mc.state == len(self.action_list) - 1:
@@ -47,12 +42,7 @@ class Q_learningv2:
         else:
             charging_time = self.charging_time[mc.state]
         print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
-        
-        #print(self.charging_time)
-        #print(self.list_request)
-        #print(self.action_list)
 
-        #exit()
         return self.action_list[mc.state], charging_time
 
     def q_max(self, mc, q_table, q_max_func=q_max_function):
@@ -63,11 +53,17 @@ class Q_learningv2:
         second = np.asarray([0.0 for _ in self.action_list], dtype=float)
         third = np.asarray([0.0 for _ in self.action_list], dtype=float)
         for index, row in enumerate(self.q_table):
-            temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, receive_func=find_receiver)
-            first[index] = temp[0]
-            second[index] = temp[1]
-            third[index] = temp[2]
-            self.charging_time[index] = temp[3]
+            if index < self.nb_action:
+                if network.node[index].energy > 0:
+                    temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, receive_func=find_receiver)
+                    first[index] = temp[0]
+                    second[index] = temp[1]
+                    third[index] = temp[2]
+                    self.charging_time[index] = temp[3]
+                else:
+                    first[index] = -1e9
+                    second[index] = third[index] = 0
+        
         first = first / np.sum(first)
         second = second / np.sum(second)
         third = third / np.sum(third)
