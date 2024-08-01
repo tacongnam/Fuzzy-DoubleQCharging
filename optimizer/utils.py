@@ -8,21 +8,17 @@ import pickle
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
-# Modules
 from simulator.network import parameter as para
 from simulator.node.utils import find_receiver
-from optimizer.fuzzy_controller import FuzzyController
-
-fuzzy_controller = FuzzyController(network)
 
 def q_max_function(q_table, state):
     temp = np.max(q_table, axis=1)
     temp[state] = -np.inf
     return temp
 
-def reward_function(network, mc, q_learning, state, time_stem, receive_func=find_receiver):
+def reward_function(network, mc, q_learning, state, time_stem, fuzzy, receive_func=find_receiver):
     alpha = q_learning.alpha
-    charging_time = get_charging_time(network, mc, q_learning, time_stem=time_stem, state=state, alpha=alpha)
+    charging_time = get_charging_time(network, mc, q_learning, time_stem=time_stem, state=state, alpha=alpha, fuzzy_controller=fuzzy)
     w, nb_target_alive = get_weight(network, mc, q_learning, state, charging_time, receive_func)
     p = get_charge_per_2sec(network, q_learning, state)
 
@@ -40,7 +36,7 @@ def init_function(nb_action=81):
     return np.zeros((nb_action + 1, nb_action + 1), dtype=float)
 
 def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_receiver):
-    p = get_charge_per_sec(net, q_learning, action_id)
+    p = get_charge_per_2sec(net, q_learning, action_id)
     all_path = get_all_path(net, receive_func)
     time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
     list_dead = [
@@ -88,7 +84,7 @@ def get_charge_per_2sec(net, q_learning, state):
                                           q_learning.action_list[state]) + para.beta) ** 2 for
          request in q_learning.list_request])
 
-def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1):
+def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1, fuzzy_controller=None):
     # request_id = [request["id"] for request in network.mc.list_request]
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
     alpha = fuzzy_controller.compute_fuzzy_values(network, q_learning, state)

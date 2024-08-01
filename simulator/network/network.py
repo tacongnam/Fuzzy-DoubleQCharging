@@ -178,7 +178,7 @@ class Network:
 
 
         print('\n[Network]: Finished with {} dead sensors, {} packages at {}s!'.format(self.count_dead_node(), self.count_package(), dead_time))
-        load_network(network)
+        load_network(self)
         return dead_time, nb_dead
 
     def simulate(self, optimizer=None, t=0, dead_time=0, max_time=2000000):

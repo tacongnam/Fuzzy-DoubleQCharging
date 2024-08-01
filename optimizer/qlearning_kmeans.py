@@ -3,6 +3,7 @@ from scipy.spatial import distance
 
 from optimizer.utils import init_function, q_max_function, reward_function, network_clustering, network_clustering_v2
 from simulator.node.utils import find_receiver
+from optimizer.fuzzy_controller import FuzzyController
 
 class Q_learningv2:
     def __init__(self, init_func=init_function, nb_action=80, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
@@ -20,6 +21,10 @@ class Q_learningv2:
         self.q_alpha = q_alpha
         self.q_gamma = q_gamma
         self.len = nb_action
+        self.fuzzy = None
+    
+    def update_fuzzy(self, network):
+        self.fuzzy = FuzzyController(network)
 
     def update(self, mc, network, time_stem, alpha=0.5, gamma=0.5, q_max_func=q_max_function, reward_func=reward_function):
         if not len(self.list_request):
@@ -55,7 +60,7 @@ class Q_learningv2:
         for index, row in enumerate(self.q_table):
             if index < self.nb_action:
                 if network.node[index].energy > 0:
-                    temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, receive_func=find_receiver)
+                    temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, fuzzy=self.fuzzy, receive_func=find_receiver)
                     first[index] = temp[0]
                     second[index] = temp[1]
                     third[index] = temp[2]

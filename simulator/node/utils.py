@@ -42,9 +42,9 @@ def find_receiver(node, net):
         return -1
 
     neighbor_ids = np.array([nid for nid in node.neighbor 
-        if net.node[nid].level < node.level and net.node[nid].is_active])
+                             if net.node[nid].level < node.level and net.node[nid].is_active])
     
-     if neighbor_ids.size == 0:
+    if neighbor_ids.size == 0:
         return -1
 
     base_location = np.array(para.base)
