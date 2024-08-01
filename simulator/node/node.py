@@ -80,18 +80,24 @@ class Node:
             if receiver_id != -1:
                 d = distance.euclidean(self.location, net.node[receiver_id].location)
                 e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
-                self.energy -= e_send * package.size
-                self.used_energy += e_send * package.size
-                self.actual_used_energy += e_send * package.size
+                
+                # send 2 times
+                self.energy -= 2 * e_send * package.size
+                self.used_energy += 2 * e_send * package.size
+                self.actual_used_energy += 2 * e_send * package.size
+
                 net.node[receiver_id].receive(package)
                 net.node[receiver_id].send(net, package, receiver, is_energy_info)
         else:
             package.is_success = True
             d = distance.euclidean(self.location, para.base)
             e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
-            self.energy -= e_send * package.size
-            self.used_energy += e_send * package.size
-            self.actual_used_energy += e_send * package.size
+
+            #send 2 times
+            self.energy -= 2 * e_send * package.size
+            self.used_energy += 2 * e_send * package.size
+            self.actual_used_energy += 2 * e_send * package.size
+
             package.update_path(-1)
         self.check_active(net)
 
@@ -101,9 +107,10 @@ class Node:
         :param package: size of package
         :return: reduce energy of this node
         """
-        self.energy -= para.ER * package.size
-        self.used_energy += para.ER * package.size
-        self.actual_used_energy += para.ER * package.size
+        # receive 2 times
+        self.energy -= 2 * para.ER * package.size
+        self.used_energy += 2 * para.ER * package.size
+        self.actual_used_energy += 2 * para.ER * package.size
 
     def check_active(self, net):
         """

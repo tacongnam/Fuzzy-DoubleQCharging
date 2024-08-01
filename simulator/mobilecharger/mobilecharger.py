@@ -39,7 +39,7 @@ class MobileCharger:
 
     def update_location(self, func=get_location):
         self.current = func(self)
-        self.energy -= self.e_move
+        self.energy -= 2 * self.e_move
 
     def charge(self, net=None, node=None, func=charging):
         func(self, net, node)

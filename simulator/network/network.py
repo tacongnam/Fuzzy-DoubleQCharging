@@ -50,7 +50,7 @@ class Network:
     def communicate(self, func=uniform_com_func):
         return func(self)
 
-    def run_per_second(self, t, optimizer):
+    def run_per_2seconds(self, t, optimizer):
         state = self.communicate()
         self.request_id = []
         for index, node in enumerate(self.node):
@@ -66,8 +66,6 @@ class Network:
             
         if optimizer and self.active:
             for mc in self.mc_list:
-                # if mc.id*300 < t:
-                #     mc.run(network=self, time_stem=t, net=self, optimizer=optimizer)
                 mc.run(network=self, time_stem=t, net=self, optimizer=optimizer)
         return state
 
@@ -92,11 +90,11 @@ class Network:
             for i in range(20):
                 node_writer.writerow(sorted_network_energy_info[i])
 
-    def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
+    def simulate_max_time_v2(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
         nb_dead = self.count_dead_node()
         nb_package = self.count_package()
         dead_time = dead_time
-
+        
         if t == 0:
             with open(self.net_log_file, "w") as information_log:
                 writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
@@ -112,7 +110,7 @@ class Network:
         
         t = t
         while t <= max_time and self.count_package()==len(self.target):
-            t = t + 1
+            t = t + 2
             if (t - 1) % 100 == 0:
                 print("[Network] Simulating time: {}s, lowest energy node: {:.4f} at {}".format(t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].location))
                 print('\t\tNumber of dead nodes: {}'.format(self.count_dead_node()))
@@ -149,10 +147,7 @@ class Network:
                 self.active = True
             ######################################
 
-            state = self.run_per_second(t, optimizer)
-
-            # if t % 300 == 0:
-            #     self.log_energy(t)
+            state = self.run_per_2seconds(t, optimizer)
 
             current_dead = self.count_dead_node()
             current_package = self.count_package()
@@ -183,11 +178,11 @@ class Network:
 
 
         print('\n[Network]: Finished with {} dead sensors, {} packages at {}s!'.format(self.count_dead_node(), self.count_package(), dead_time))
-        load_network(self)
+        load_network(network)
         return dead_time, nb_dead
 
     def simulate(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
-        life_time = self.simulate_max_time(optimizer=optimizer, t=t, dead_time=dead_time, max_time=max_time)
+        life_time = self.simulate_max_time_v2(optimizer=optimizer, t=t, dead_time=dead_time, max_time=max_time)
         return life_time
 
     def print_net(self, func=to_string):
@@ -197,7 +192,8 @@ class Network:
         min_energy = 10 ** 10
         min_id = -1
         for node in self.node:
-            if node.energy < min_energy:
+            # only count nodes if they are alive:
+            if node.energy > 0 and node.energy < min_energy:
                 min_energy = node.energy
                 min_id = node.id
         return min_id

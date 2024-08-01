@@ -29,11 +29,11 @@ class Q_learningv2:
         self.set_reward(mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
 
         if np.random.rand() < 0.5:
-            optimal_future = self.q_max(mc, self.q1, q_max_func)
+            optimal_future = self.q_max(mc, self.q2, q_max_func)
             for i in range(self.len + 1):
                 self.q1[mc.state][i] += self.q_alpha * (self.reward[i] + self.q_gamma * self.q2[i][optimal_future[i]] - self.q1[mc.state][i])
         else:
-            optimal_future = self.q_max(mc, self.q2, q_max_func)
+            optimal_future = self.q_max(mc, self.q1, q_max_func)
             for i in range(self.len + 1):
                 self.q2[mc.state][i] += self.q_alpha * (self.reward[i] + self.q_gamma * self.q1[i][optimal_future[i]] - self.q2[mc.state][i])
 
