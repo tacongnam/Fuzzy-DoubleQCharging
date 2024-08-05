@@ -48,25 +48,21 @@ class MobileCharger:
         self.energy = min(self.energy + 2 * self.e_self_charge, self.capacity)
 
     def check_state(self):
-        current = np.array(self.current)
-        end = np.array(self.end)
-        depot = np.array(para.depot)
-    
-        distance_to_end = distance.euclidean(current, end)
-        distance_to_depot = distance.euclidean(end, depot)
-    
-        self.is_stand = distance_to_end < 1
-        self.is_self_charge = distance_to_depot < 1e-3
-
-        if self.is_stand:
+        if distance.euclidean(self.current, self.end) < 1:
+            self.is_stand = True
             self.current = self.end
+        else:
+            self.is_stand = False
+        if distance.euclidean(para.depot, self.end) < 10 ** -3:
+            self.is_self_charge = True
+        else:
+            self.is_self_charge = False
 
     def get_next_location(self, network, time_stem, optimizer=None):
         next_location, charging_time = optimizer.update(self, network, time_stem)
         self.start = self.current
         self.end = next_location
-        distance_move = distance.euclidean(self.start, self.end)
-        self.moving_time = distance_move / self.velocity
+        self.moving_time = distance.euclidean(self.start, self.end) / self.velocity
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
 

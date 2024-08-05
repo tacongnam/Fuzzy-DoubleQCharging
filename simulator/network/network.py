@@ -109,9 +109,12 @@ class Network:
                 writer.writeheader()
         
         t = t
+        if optimizer != None:
+            optimizer.update_fuzzy(self)
+
         while t <= max_time and self.count_package()==len(self.target):
             t = t + 2
-            if (t - 1) % 100 == 0:
+            if (t % 100) < 2:
                 print("[Network] Simulating time: {}s, lowest energy node: {:.4f} at {}".format(t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].location))
                 print('\t\tNumber of dead nodes: {}'.format(self.count_dead_node()))
                 print('\t\tNumber of packages: {}'.format(self.count_package()))
@@ -138,7 +141,7 @@ class Network:
                 for mc in self.mc_list:
                     print("\t\tMC #{} is {} at {}".format(mc.id, mc.get_status(), mc.current))
 
-            if (t-1) % 500 == 0 and t > 1:
+            if (t % 500) < 2 and t > 1:
                 set_checkpoint(t=t, network=self, optimizer=optimizer, dead_time=dead_time)
 
             ######################################

@@ -32,7 +32,13 @@ class Q_learningv2:
 
         self.set_reward(mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
 
-        if np.random.rand() < 0.5:
+        ran = np.random.rand()
+        if ran < 0.4:
+            self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
+                self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
+            self.q1[mc.state] = self.q_table[mc.state]
+            self.q2[mc.state] = self.q_table[mc.state]
+        elif ran < 0.7:
             optimal_future = self.q_max(mc, self.q2, q_max_func)
             self.q1[mc.state] += self.q_alpha * (self.reward + self.q_gamma * optimal_future - self.q1[mc.state])
         else:
@@ -40,7 +46,7 @@ class Q_learningv2:
             self.q2[mc.state] += self.q_alpha * (self.reward + self.q_gamma * optimal_future - self.q2[mc.state])
 
         self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
-
+        
         self.choose_next_state(mc, network)
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
@@ -58,7 +64,7 @@ class Q_learningv2:
         second = np.asarray([0.0 for _ in self.action_list], dtype=float)
         third = np.asarray([0.0 for _ in self.action_list], dtype=float)
         for index, row in enumerate(self.q_table):
-            if index < self.nb_action:
+            if index < len(self.action_list) - 1:
                 if network.node[index].energy > 0:
                     temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, fuzzy=self.fuzzy, receive_func=find_receiver)
                     first[index] = temp[0]
@@ -68,6 +74,12 @@ class Q_learningv2:
                 else:
                     first[index] = -1e9
                     second[index] = third[index] = 0
+            else:
+                temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, fuzzy=self.fuzzy, receive_func=find_receiver)
+                first[index] = temp[0]
+                second[index] = temp[1]
+                third[index] = temp[2]
+                self.charging_time[index] = temp[3]
         
         first = first / np.sum(first)
         second = second / np.sum(second)

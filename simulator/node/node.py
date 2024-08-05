@@ -56,11 +56,11 @@ class Node:
         """
         if self.energy <= self.energy_max - 10 ** -5 and mc.is_stand and self.is_active:
             d = distance.euclidean(self.location, mc.current)
-            p_theory = para.alpha / (d + para.beta) ** 2
+            p_theory = 2 * para.alpha / (d + para.beta) ** 2
             p_actual = min(self.energy_max - self.energy, p_theory)
-            self.energy = self.energy + 2 * p_actual
-            self.charged_energy += 2 * p_actual
-            return 2 * p_actual
+            self.energy = self.energy + p_actual
+            self.charged_energy += p_actual
+            return p_actual
         else:
             return 0
 

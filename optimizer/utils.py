@@ -39,6 +39,7 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
     p = get_charge_per_2sec(net, q_learning, action_id)
     all_path = get_all_path(net, receive_func)
     time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
+    
     list_dead = [
         request["id"]
         for request_id, request in enumerate(q_learning.list_request)
@@ -50,13 +51,16 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
                       for req in q_learning.list_request}
     
     w = np.array([node_to_weight.get(request["id"], 0) for request in q_learning.list_request])
+    
     total_weight = np.sum(w) + len(w) * 1e-3
     w = (w + 1e-3) / total_weight
     
-    nb_target_alive = sum(
-        para.base in path and not set(list_dead).intersection(path)
-        for path in all_path
-    )
+    nb_target_alive = 0
+    set_dead = set(list_dead)
+    for path in all_path:
+        set_path = set(path)
+        if para.base in set_path and not set_path & set_dead:
+            nb_target_alive += 1
     
     return w, nb_target_alive
 
@@ -87,10 +91,15 @@ def get_charge_per_2sec(net, q_learning, state):
 def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1, fuzzy_controller=None):
     # request_id = [request["id"] for request in network.mc.list_request]
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
-    alpha = fuzzy_controller.compute_fuzzy_values(network, q_learning, state)
+    energy_min = 0
 
-    energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
-
+    # Fuzzy / Not-Fuzzy
+    if fuzzy_controller == None:
+        energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
+    else:
+        alpha = fuzzy_controller.compute_fuzzy_values(network, q_learning, state)
+        energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
+    
     locations = np.array([node.location for node in network.node])
     energies = np.array([node.energy for node in network.node])
     avg_energies = np.array([node.avg_energy for node in network.node])
@@ -128,17 +137,25 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     return 0
 
 def network_clustering(optimizer, network=None, nb_cluster=81):
-    X = np.array([node.location for node in network.node])
-    Y = np.array([node.avg_energy**0.5 for node in network.node])
-
+    X = []
+    Y = []
+    for node in network.node:
+        node.set_check_point(200)
+        X.append(node.location)
+        Y.append(node.avg_energy**0.5)
+    X = np.array(X)
+    Y = np.array(Y)
+    # print(Y)
+    
     Y /= np.linalg.norm(Y)
+
     kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X, sample_weight=Y)
     
     charging_pos = [tuple(map(int, pos)) for pos in kmeans.cluster_centers_]
     charging_pos.append(para.depot)
 
     # print(charging_pos, file=open('log/centroid.txt', 'w'))
-    node_distribution_plot(network=network, charging_pos=charging_pos)
+    # node_distribution_plot(network=network, charging_pos=charging_pos)
     network_plot(network=network, charging_pos=charging_pos)
     return charging_pos
 
