@@ -164,3 +164,6 @@ checkpoint/
 log/
 fig/
 venv/
+!checkpoint/.gitkeep
+!log/.gitkeep
+!fig/.gitkeep
