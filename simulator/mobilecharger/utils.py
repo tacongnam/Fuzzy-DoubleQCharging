@@ -1,22 +1,19 @@
-import numpy as np
+from scipy.spatial import distance
 
 def get_location(mc):
-    dx = mc.end[0] - mc.start[0]
-    dy = mc.end[1] - mc.start[1]
-    d = np.hypot(dx, dy)
+    # print(mc.current, mc.end)
+    d = distance.euclidean(mc.start, mc.end)
     time_move = d / mc.velocity
-
     if time_move == 0:
         return mc.current
-    elif np.hypot(mc.current[0] - mc.end[0], mc.current[1] - mc.end[1]) < 1e-3:
+    elif distance.euclidean(mc.current, mc.end) < 10 ** -3:
         return mc.end
     else:
-        # Move 2 seconds
-        x_hat = mc.current[0] + 2 * dx / time_move
-        y_hat = mc.current[1] + 2 * dy / time_move
-
-        if (dx * (mc.end[0] - x_hat) < 0 or
-            (dx * (mc.end[0] - x_hat) == 0 and dy * (mc.end[1] - y_hat) <= 0)):
+        x_hat = 2 * (mc.end[0] - mc.start[0]) / time_move + mc.current[0]
+        y_hat = 2 * (mc.end[1] - mc.start[1]) / time_move + mc.current[1]
+        if (mc.end[0] - mc.current[0]) * (mc.end[0] - x_hat) < 0 or (
+                (mc.end[0] - mc.current[0]) * (mc.end[0] - x_hat) == 0 and (mc.end[1] - mc.current[1]) * (
+                mc.end[1] - y_hat) <= 0):
             return mc.end
         else:
             return x_hat, y_hat

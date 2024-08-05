@@ -57,7 +57,7 @@ class MobileCharger:
             self.is_self_charge = True
         else:
             self.is_self_charge = False
-
+        
     def get_next_location(self, network, time_stem, optimizer=None):
         next_location, charging_time = optimizer.update(self, network, time_stem)
         self.start = self.current
@@ -89,15 +89,13 @@ class MobileCharger:
         if ((not self.is_active) and optimizer.list_request) or abs(time_stem - self.end_time) < 1:
             self.is_active = True
 
-            # Lọc yêu cầu không còn hợp lệ
-            node_energies = np.array([net.node[req["id"]].energy for req in optimizer.list_request])
-            node_thresholds = np.array([net.node[req["id"]].energy_thresh for req in optimizer.list_request])
-            valid_requests = node_energies < node_thresholds
-
-            optimizer.list_request = [req for req, valid in zip(optimizer.list_request, valid_requests) if valid]
-            for req, valid in zip(optimizer.list_request, valid_requests):
-                if not valid:
-                    net.node[req["id"]].is_request = False
+            new_list_request = []
+            for request in optimizer.list_request:
+                if net.node[request["id"]].energy < net.node[request["id"]].energy_thresh:
+                    new_list_request.append(request)
+                else:
+                    net.node[request["id"]].is_request = False
+            optimizer.list_request = new_list_request
 
             if not optimizer.list_request:
                 self.is_active = False

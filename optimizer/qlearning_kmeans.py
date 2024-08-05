@@ -36,24 +36,21 @@ class Q_learningv2:
         if ran < 0.4:
             self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
                 self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
-            self.q1[mc.state] = self.q_table[mc.state]
-            self.q2[mc.state] = self.q_table[mc.state]
         elif ran < 0.7:
-            optimal_future = self.q_max(mc, self.q2, q_max_func)
-            self.q1[mc.state] += self.q_alpha * (self.reward + self.q_gamma * optimal_future - self.q1[mc.state])
+            self.q1[mc.state] = (1 - self.q_alpha) * self.q1[mc.state] + self.q_alpha * (
+                self.reward + self.q_gamma * self.q_max(mc, self.q2, q_max_func))
+            self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
         else:
-            optimal_future = self.q_max(mc, self.q1, q_max_func)
-            self.q2[mc.state] += self.q_alpha * (self.reward + self.q_gamma * optimal_future - self.q2[mc.state])
-
-        self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
+            self.q2[mc.state] = (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (
+                self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
+            self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
         
         self.choose_next_state(mc, network)
-        if mc.state == len(self.action_list) - 1:
+        if mc.state == len(self.action_list) - 1:   # self_charge
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
         else:
             charging_time = self.charging_time[mc.state]
         print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
-
         return self.action_list[mc.state], charging_time
 
     def q_max(self, mc, q_table, q_max_func=q_max_function):
@@ -64,23 +61,16 @@ class Q_learningv2:
         second = np.asarray([0.0 for _ in self.action_list], dtype=float)
         third = np.asarray([0.0 for _ in self.action_list], dtype=float)
         for index, row in enumerate(self.q_table):
-            if index < len(self.action_list) - 1:
-                if network.node[index].energy > 0:
-                    temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, fuzzy=self.fuzzy, receive_func=find_receiver)
-                    first[index] = temp[0]
-                    second[index] = temp[1]
-                    third[index] = temp[2]
-                    self.charging_time[index] = temp[3]
-                else:
-                    first[index] = -1e9
-                    second[index] = third[index] = 0
+            if index < self.nb_action and network.node[index].energy <= 0:
+                first[index] = -1e9
+                second[index] = third[index] = 0
             else:
                 temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, fuzzy=self.fuzzy, receive_func=find_receiver)
                 first[index] = temp[0]
                 second[index] = temp[1]
                 third[index] = temp[2]
                 self.charging_time[index] = temp[3]
-        
+                
         first = first / np.sum(first)
         second = second / np.sum(second)
         third = third / np.sum(third)
@@ -94,6 +84,10 @@ class Q_learningv2:
             print('[Optimizer] MC #{} energy is running low ({:.2f}), and needs to rest!'.format(mc.id, mc.energy))
         else:
             mc.state = np.argmax(self.q_table[mc.state])
+            # print(self.q1[mc.state])
+            # print(self.q2[mc.state])
+            # print("ID: " + str(mc.id))
+            # print(self.q_table[mc.state])
             # print(self.reward_max[mc.state])
             # print(self.action_list[mc.state])
     
