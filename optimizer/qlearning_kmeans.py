@@ -81,6 +81,8 @@ class Q_learningv2:
                     self.reward[index] = -float("inf")
                 elif distance.euclidean(mc.current, network.node[index].location) * mc.e_move + distance.euclidean(network.node[index].location, para.base) * mc.e_move > mc.energy:
                     self.reward[index] = -float("inf")
+                else:
+                    self.reward[index] = first[index] + second[index] + third[index]
             else:
                 self.reward[index] = first[index] + second[index] + third[index]
 
