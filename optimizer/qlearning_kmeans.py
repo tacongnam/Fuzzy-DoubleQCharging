@@ -79,7 +79,7 @@ class Q_learningv2:
             if index < self.nb_action:
                 if network.node[index].energy <= 0 or self.charging_time[index] < 2:
                     self.reward[index] = -float("inf")
-                elif distance.euclidean(mc.current, network.node[index].location) * mc.e_move + distance.euclidean(network.node[index].location, para.base) * mc.e_move < mc.energy:
+                elif distance.euclidean(mc.current, network.node[index].location) * mc.e_move + distance.euclidean(network.node[index].location, para.base) * mc.e_move > mc.energy:
                     self.reward[index] = -float("inf")
             else:
                 self.reward[index] = first[index] + second[index] + third[index]
