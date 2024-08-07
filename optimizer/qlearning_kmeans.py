@@ -94,8 +94,9 @@ class Q_learningv2:
             mc.state = len(q_table) - 1
             print('[Optimizer] MC #{} energy is running low ({:.2f}), and needs to rest!'.format(mc.id, mc.energy))
         else:
+            prev = mc.state
             mc.state = np.argmax(q_table[mc.state])
-            if q_table[mc.state] == -float("inf"):
+            if q_table[prev][mc.state] == -float("inf"):
                 mc.state = len(q_table) - 1
             # print(self.q1[mc.state])
             # print(self.q2[mc.state])
