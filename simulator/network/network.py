@@ -146,6 +146,7 @@ class Network:
 
             ######################################
             if t == 200:
+                print('Net partition done!')
                 optimizer.net_partition(net=self)
                 self.active = True
             ######################################
@@ -174,6 +175,7 @@ class Network:
                     'MC_1_location' : self.mc_list[1].current,
                     'MC_2_location' : self.mc_list[2].current,
                 }
+
                 with open(self.net_log_file, 'a') as information_log:
                     node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)

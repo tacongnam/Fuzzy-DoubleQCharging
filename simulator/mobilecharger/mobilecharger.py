@@ -65,8 +65,9 @@ class MobileCharger:
         self.moving_time = distance.euclidean(self.start, self.end) / self.velocity
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
-
-        print(f"[Mobile Charger] MC #{self.id} moves to {self.end} in {self.moving_time:.2f}s and charges for {charging_time:.2f}s")
+        
+        if charging_time > 2:
+            print(f"[Mobile Charger] MC #{self.id} moves to {self.end} in {self.moving_time:.2f}s and charges for {charging_time:.2f}s")
 
         mc_info = {
             'time_stamp': time_stem,
@@ -86,7 +87,8 @@ class MobileCharger:
 
     def run(self, network, time_stem, net=None, optimizer=None):
         # print(self.energy, self.start, self.end, self.current)
-        if ((not self.is_active) and optimizer.list_request) or abs(time_stem - self.end_time) < 1:
+        if ((not self.is_active) and optimizer.list_request) or (time_stem > self.end_time or abs(time_stem - self.end_time) < 2):
+            #print(optimizer.list_request, abs(time_stem - self.end_time), time_stem, self.end_time)
             self.is_active = True
 
             new_list_request = []

@@ -16,6 +16,7 @@ from simulator.node.node import Node
 def get_experiment(simulation_type):
     while True:
         try:
+            print('type: custom; index: 0 for custom sensors / targets')
             experiment_type = input('Enter Experiment type: ')
             experiment_index = int(input('Enter Experiment index: '))
             if simulation_type == 'start':
@@ -33,7 +34,6 @@ def get_experiment(simulation_type):
                 print('Experiment checkpoint does not exist! Please try a again.')
 
 
-
 def start_simulating(df, experiment_type, experiment_index, loop):
     print('[Simulator] Starting new experiment...')
 
@@ -48,7 +48,6 @@ def start_simulating(df, experiment_type, experiment_index, loop):
     output_file = open("log/q_learning_Kmeans.csv", "w")
     result = csv.DictWriter(output_file, fieldnames=["nb_run", "lifetime", "dead_node"])
     result.writeheader()
-
 
     # Read data from experiment datasheet
     com_ran = df.commRange[experiment_index]
@@ -156,6 +155,5 @@ print('-------------------------------------------------------------------------
 if (simulation_type == 1):
     df, experiment_type, experiment_index = get_experiment('start')
     start_simulating(df, experiment_type, experiment_index, 2)
-else:
+elif (simulation_type == 2):
     resume_simulating()
-

@@ -18,9 +18,9 @@ class FuzzyController:
         E_min['M'] = fuzz.trimf(E_min.universe, [2.5, 5.0, 7.5])
         E_min['H'] = fuzz.trapmf(E_min.universe, [5, 7.5, 10, 10])
         
-        Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/10])
-        Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/10, 1/3])
-        Theta['M'] = fuzz.trimf(Theta.universe, [1/10, 1/3, 2/3])
+        Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/3])
+        Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/3, 2/3])
+        Theta['M'] = fuzz.trimf(Theta.universe, [1/3, 2/3, 1])
         Theta['H'] = fuzz.trimf(Theta.universe, [2/3, 1, 1])
         
         # Define fuzzy rules
