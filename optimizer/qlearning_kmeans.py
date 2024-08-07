@@ -49,7 +49,7 @@ class Q_learningv2:
             print(mc.id, time_stem, self.q2[mc.state])
             self.choose_next_state(self.q2, mc, network)
         
-        if mc.state == len(self.nb_action) - 1:   # self_charge
+        if mc.state == self.nb_action:   # self_charge
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
             print("[Optimizer] MC #{} is sent to base and self-charge for {:.2f}s".format(mc.id, charging_time))
         else:
@@ -67,7 +67,7 @@ class Q_learningv2:
         for index, row in enumerate(self.q_table):
             temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, fuzzy=self.fuzzy, receive_func=find_receiver)
             first[index] = temp[0]
-            second[index] = temp[1]
+            second[index] = temp[1] 
             third[index] = temp[2]
             self.charging_time[index] = temp[3]
                 
@@ -95,6 +95,8 @@ class Q_learningv2:
             print('[Optimizer] MC #{} energy is running low ({:.2f}), and needs to rest!'.format(mc.id, mc.energy))
         else:
             mc.state = np.argmax(q_table[mc.state])
+            if q_table[mc.state] == -float("inf"):
+                mc.state = len(q_table) - 1
             # print(self.q1[mc.state])
             # print(self.q2[mc.state])
             # print("ID: " + str(mc.id))
