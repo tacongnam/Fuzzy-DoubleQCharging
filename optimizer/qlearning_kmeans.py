@@ -49,7 +49,7 @@ class Q_learningv2:
             print(mc.id, time_stem, self.q2[mc.state])
             self.choose_next_state(self.q2, mc, network)
         
-        if mc.state == len(self.action_list) - 1:   # self_charge
+        if mc.state == len(self.nb_action) - 1:   # self_charge
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
             print("[Optimizer] MC #{} is sent to base and self-charge for {:.2f}s".format(mc.id, charging_time))
         else:
