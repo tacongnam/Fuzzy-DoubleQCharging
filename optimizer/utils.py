@@ -28,7 +28,7 @@ def reward_function(network, mc, q_learning, state, time_stem, fuzzy, receive_fu
     p_hat = p / np.sum(p)
     first = np.sum(e * p / E)
     second = nb_target_alive / len(network.target)
-    third = np.dot(w, p_hat)
+    third = np.sum(w * p_hat)
     
     return first, second, third, charging_time
 
@@ -39,7 +39,7 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
     p = get_charge_per_sec(net, q_learning, action_id)
     all_path = get_all_path(net, receive_func)
     time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
-    
+    '''
     list_dead = [
         request["id"]
         for request_id, request in enumerate(q_learning.list_request)
@@ -53,7 +53,23 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
     w = np.array([node_to_weight.get(request["id"], 0) for request in q_learning.list_request])
     
     total_weight = np.sum(w) + len(w) * 1e-3
+    
     w = (w + 1e-3) / total_weight
+    '''
+    list_dead = []
+    w = [0 for _ in q_learning.list_request]
+    for request_id, request in enumerate(q_learning.list_request):
+        temp = (net.node[request["id"]].energy - time_move * request["avg_energy"]) + (
+                p[request_id] - request["avg_energy"]) * charging_time
+        if temp < 0:
+            list_dead.append(request["id"])
+    for request_id, request in enumerate(q_learning.list_request):
+        nb_path = 0
+        for path in all_path:
+            if request["id"] in path:
+                nb_path += 1
+        w[request_id] = nb_path
+    total_weight = sum(w) + len(w) * 10 ** -3
     
     nb_target_alive = 0
     set_dead = set(list_dead)

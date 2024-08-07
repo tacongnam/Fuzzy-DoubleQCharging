@@ -31,7 +31,7 @@ class Q_learningv2:
             return self.action_list[mc.state], 0.0
 
         self.set_reward(mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
-        '''
+        
         self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
                 self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
         self.choose_next_state(self.q_table, mc, network)
@@ -47,6 +47,8 @@ class Q_learningv2:
                 self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
 
         self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
+        '''
+
         self.choose_next_state(self.q_table, mc, network)
 
         if mc.state == len(self.action_list) - 1:
