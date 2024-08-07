@@ -31,23 +31,24 @@ class Q_learningv2:
             return self.action_list[mc.state], 0.0
 
         self.set_reward(mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
-        
+        '''
         self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
                 self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
         self.choose_next_state(self.q_table, mc, network)
 
         '''
         ran = np.random.rand()
+        
         if ran < 0.5:
             self.q1[mc.state] = (1 - self.q_alpha) * self.q1[mc.state] + self.q_alpha * (
                 self.reward + self.q_gamma * self.q_max(mc, self.q2, q_max_func))
-            self.choose_next_state(self.q1, mc, network)
         else:
             self.q2[mc.state] = (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (
                 self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
-            self.choose_next_state(self.q2, mc, network)
-        '''
-        
+
+        self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
+        self.choose_next_state(self.q_table, mc, network)
+
         if mc.state == self.nb_action:   # self_charge
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
             print("[Optimizer] MC #{} is sent to base and self-charge for {:.2f}s".format(mc.id, charging_time))
@@ -78,8 +79,8 @@ class Q_learningv2:
             if index < self.nb_action:
                 if network.node[index].energy <= 0 or self.charging_time[index] < 2:
                     self.reward[index] = -float("inf")
-                # elif distance.euclidean(mc.current, network.node[index].location) * mc.e_move + distance.euclidean(network.node[index].location, para.base) * mc.e_move > mc.energy:
-                #    self.reward[index] = -float("inf")
+                elif distance.euclidean(mc.current, network.node[index].location) * mc.e_move + distance.euclidean(network.node[index].location, para.base) * mc.e_move > mc.energy:
+                    self.reward[index] = -float("inf")
                 else:
                     self.reward[index] = first[index] + second[index] + third[index]
             else:
