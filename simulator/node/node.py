@@ -17,8 +17,6 @@ class Node:
         self.prob = prob  # probability of sending data
         self.check_point = [{"E_current": self.energy, "time": 0, "avg_e": 0.0}]  # check point of information of sensor
         self.used_energy = 0.0  # energy was used from last check point to now
-        self.charged_energy = 0.0 # energy was received from mc
-        self.actual_used_energy = 0.0 # energy was used from the beginning
         self.avg_energy = avg_energy  # average energy of sensor
         self.len_cp = len_cp  # length of check point list
         self.id = id  # identify of sensor
@@ -50,23 +48,22 @@ class Node:
 
     def charge(self, mc):
         """
-        charging to sensor - 2 seconds
+        charging to sensor
         :param mc: mobile charger
         :return: the amount of energy mc charges to this sensor
         """
         if self.energy <= self.energy_max - 10 ** -5 and mc.is_stand and self.is_active:
             d = distance.euclidean(self.location, mc.current)
-            p_theory = 2 * para.alpha / (d + para.beta) ** 2
+            p_theory = para.alpha / (d + para.beta) ** 2
             p_actual = min(self.energy_max - self.energy, p_theory)
             self.energy = self.energy + p_actual
-            self.charged_energy += p_actual
             return p_actual
         else:
             return 0
 
     def send(self, net=None, package=None, receiver=find_receiver, is_energy_info=False):
         """
-        send package - 2 times / 2 seconds
+        send package
         :param package:
         :param net: the network
         :param receiver: the function calculate receiver node
@@ -80,37 +77,27 @@ class Node:
             if receiver_id != -1:
                 d = distance.euclidean(self.location, net.node[receiver_id].location)
                 e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
-                
-                # send 2 times
-                self.energy -= 2 * e_send * package.size
-                self.used_energy += 2 * e_send * package.size
-                self.actual_used_energy += 2 * e_send * package.size
-
+                self.energy -= e_send * package.size
+                self.used_energy += e_send * package.size
                 net.node[receiver_id].receive(package)
                 net.node[receiver_id].send(net, package, receiver, is_energy_info)
         else:
             package.is_success = True
             d = distance.euclidean(self.location, para.base)
             e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
-
-            #send 2 times
-            self.energy -= 2 * e_send * package.size
-            self.used_energy += 2 * e_send * package.size
-            self.actual_used_energy += 2 * e_send * package.size
-
+            self.energy -= e_send * package.size
+            self.used_energy += e_send * package.size
             package.update_path(-1)
         self.check_active(net)
 
     def receive(self, package):
         """
-        receive package from other node 2 times / 2 seconds
+        receive package from other node
         :param package: size of package
         :return: reduce energy of this node
         """
-        # receive 2 times
-        self.energy -= 2 * para.ER * package.size
-        self.used_energy += 2 * para.ER * package.size
-        self.actual_used_energy += 2 * para.ER * package.size
+        self.energy -= para.ER * package.size
+        self.used_energy += para.ER * package.size
 
     def check_active(self, net):
         """

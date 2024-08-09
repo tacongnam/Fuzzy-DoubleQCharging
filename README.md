@@ -17,7 +17,6 @@
 - `scikit_learn==1.1.2`
 - `scipy==1.9.0`
 - `tabulate==0.8.10`
-- 
 
 
 ## Installation:

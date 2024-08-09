@@ -1,6 +1,6 @@
 import random
 import pickle
-import csv
+
 from simulator.network.package import Package
 
 
@@ -48,20 +48,3 @@ def set_checkpoint(t=0, network=None, optimizer=None, dead_time=0):
     with open('checkpoint/checkpoint_{}_{}.pkl'.format(exp_type, exp_index), 'wb') as f:
         pickle.dump(checkpoint, f)
     print("[Simulator] Simulation checkpoint set at {}s".format(t))
-
-def load_network(network=None):
-    nodes_info = []
-    for node in network.node:
-        node_info = {
-            'id': node.id,
-            'location': node.location,
-            'used energy': node.actual_used_energy,
-            'avg energy': node.avg_energy,
-            'charged energy': node.charged_energy
-        }
-        nodes_info.append(node_info)
-
-    with open("log/energy_log.csv", 'a') as information_log:
-        node_writer = csv.DictWriter(information_log, fieldnames=['id', 'location', 'used energy', 'avg energy', 'charged energy'])
-        for row in nodes_info:
-            node_writer.writerow(row)

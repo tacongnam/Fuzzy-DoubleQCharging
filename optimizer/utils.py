@@ -8,29 +8,29 @@ import pickle
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
+# Modules
 from simulator.network import parameter as para
 from simulator.node.utils import find_receiver
 
-def q_max_function(q_table, state):
-    temp = np.max(q_table, axis=1)
-    temp[state] = -np.inf
-    return temp
 
-def reward_function(network, mc, q_learning, state, time_stem, fuzzy, receive_func=find_receiver):
+def q_max_function(q_table, state):
+    temp = [max(row) if index != state else -float("inf") for index, row in enumerate(q_table)]
+    return np.asarray(temp)
+
+
+def reward_function(network, mc, q_learning, state, time_stem, receive_func=find_receiver):
     alpha = q_learning.alpha
-    charging_time = get_charging_time(network, mc, q_learning, time_stem=time_stem, state=state, alpha=alpha, fuzzy_controller=fuzzy)
+    charging_time = get_charging_time(network, mc, q_learning, time_stem=time_stem, state=state, alpha=alpha)
     w, nb_target_alive = get_weight(network, mc, q_learning, state, charging_time, receive_func)
     p = get_charge_per_sec(network, q_learning, state)
-
+    p_hat = p / np.sum(p)
     E = np.asarray([network.node[request["id"]].energy for request in q_learning.list_request])
     e = np.asarray([request["avg_energy"] for request in q_learning.list_request])
-
-    p_hat = p / np.sum(p)
-    first = np.sum(e * p / E)
     second = nb_target_alive / len(network.target)
     third = np.sum(w * p_hat)
-    
+    first = np.sum(e * p / E)
     return first, second, third, charging_time
+
 
 def init_function(nb_action=81):
     return np.zeros((nb_action + 1, nb_action + 1), dtype=float)
@@ -38,24 +38,8 @@ def init_function(nb_action=81):
 def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_receiver):
     p = get_charge_per_sec(net, q_learning, action_id)
     all_path = get_all_path(net, receive_func)
-    time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
-    '''
-    list_dead = [
-        request["id"]
-        for request_id, request in enumerate(q_learning.list_request)
-        if (net.node[request["id"]].energy - time_move * request["avg_energy"]) + 
-           (p[request_id] - request["avg_energy"]) * charging_time < 0
-    ]
-
-    node_to_weight = {req["id"]: sum(req["id"] in path for path in all_path) 
-                      for req in q_learning.list_request}
-    
-    w = np.array([node_to_weight.get(request["id"], 0) for request in q_learning.list_request])
-    
-    total_weight = np.sum(w) + len(w) * 1e-3
-    
-    w = (w + 1e-3) / total_weight
-    '''
+    time_move = distance.euclidean(q_learning.action_list[mc.state],
+                                   q_learning.action_list[action_id]) / mc.velocity
     list_dead = []
     w = [0 for _ in q_learning.list_request]
     for request_id, request in enumerate(q_learning.list_request):
@@ -70,15 +54,13 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
                 nb_path += 1
         w[request_id] = nb_path
     total_weight = sum(w) + len(w) * 10 ** -3
-    
+    w = np.asarray([(item + 10 ** -3) / total_weight for item in w])
     nb_target_alive = 0
-    set_dead = set(list_dead)
     for path in all_path:
-        set_path = set(path)
-        if para.base in set_path and not set_path & set_dead:
+        if para.base in path and not (set(list_dead) & set(path)):
             nb_target_alive += 1
-    
     return w, nb_target_alive
+
 
 def get_path(net, sensor_id, receive_func=find_receiver):
     path = [sensor_id]
@@ -89,6 +71,7 @@ def get_path(net, sensor_id, receive_func=find_receiver):
         if receive_id != -1:
             path.extend(get_path(net, receive_id, receive_func))
     return path
+
 
 def get_all_path(net, receive_func=find_receiver):
     list_path = []
@@ -103,18 +86,48 @@ def get_charge_per_sec(net, q_learning, state):
                                           q_learning.action_list[state]) + para.beta) ** 2 for
          request in q_learning.list_request])
 
-def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1, fuzzy_controller=None):
+def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1):
     # request_id = [request["id"] for request in network.mc.list_request]
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
-    energy_min = 0
+    E_min_crisp = network.node[network.find_min_node()].energy
+    L_r_crisp = len(q_learning.list_request)
+    E_min = ctrl.Antecedent(np.linspace(0, 10, num = 1001), 'E_min')
+    L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
+    Theta = ctrl.Consequent(np.linspace(0, 1, num = 101), 'Theta')
+    L_r['L'] = fuzz.trapmf(L_r.universe, [0, 0, 2, 6])
+    L_r['M'] = fuzz.trimf(L_r.universe, [2, 6, 10])
+    L_r['H'] = fuzz.trapmf(L_r.universe, [6, 10, len(network.node), len(network.node)])
 
-    # Fuzzy / Not-Fuzzy
-    if fuzzy_controller == None:
-        energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
-    else:
-        alpha = fuzzy_controller.compute_fuzzy_values(network, q_learning, state)
-        energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
-    
+    E_min['L'] = fuzz.trapmf(E_min.universe, [0, 0, 2.5, 5])
+    E_min['M'] = fuzz.trimf(E_min.universe, [2.5, 5.0, 7.5])
+    E_min['H'] = fuzz.trapmf(E_min.universe, [5, 7.5, 10, 10])
+
+    Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/3])
+    Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/3, 2/3])
+    Theta['M'] = fuzz.trimf(Theta.universe, [1/3, 2/3, 1])
+    Theta['H'] = fuzz.trimf(Theta.universe, [2/3, 1, 1])
+
+    R1 = ctrl.Rule(L_r['L'] & E_min['L'], Theta['H'])
+    R2 = ctrl.Rule(L_r['L'] & E_min['M'], Theta['M'])
+    R3 = ctrl.Rule(L_r['L'] & E_min['H'], Theta['L'])
+    R4 = ctrl.Rule(L_r['M'] & E_min['L'], Theta['M'])
+    R5 = ctrl.Rule(L_r['M'] & E_min['M'], Theta['L'])
+    R6 = ctrl.Rule(L_r['M'] & E_min['H'], Theta['VL'])
+    R7 = ctrl.Rule(L_r['H'] & E_min['L'], Theta['L'])
+    R8 = ctrl.Rule(L_r['H'] & E_min['M'], Theta['VL'])
+    R9 = ctrl.Rule(L_r['H'] & E_min['H'], Theta['VL'])
+
+    FLCDS_ctrl = ctrl.ControlSystem([R1, R2, R3,
+                             R4, R5, R6,
+                             R7, R8, R9])
+    FLCDS = ctrl.ControlSystemSimulation(FLCDS_ctrl)
+    FLCDS.input['L_r'] = L_r_crisp
+    FLCDS.input['E_min'] = E_min_crisp
+    FLCDS.compute()
+    alpha = FLCDS.output['Theta']
+    q_learning.alpha = alpha
+    # energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
+    energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
     s1 = []  # list of node in request list which has positive charge
     s2 = []  # list of node not in request list which has negative charge
     for node in network.node:
@@ -169,16 +182,15 @@ def network_clustering(optimizer, network=None, nb_cluster=81):
     X = np.array(X)
     Y = np.array(Y)
     # print(Y)
-    
-    Y /= np.linalg.norm(Y)
-
+    d = np.linalg.norm(Y)
+    Y = Y/d
     kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X, sample_weight=Y)
-    
-    charging_pos = [tuple(map(int, pos)) for pos in kmeans.cluster_centers_]
+    charging_pos = []
+    for pos in kmeans.cluster_centers_:
+        charging_pos.append((int(pos[0]), int(pos[1])))
     charging_pos.append(para.depot)
-
     # print(charging_pos, file=open('log/centroid.txt', 'w'))
-    # node_distribution_plot(network=network, charging_pos=charging_pos)
+    node_distribution_plot(network=network, charging_pos=charging_pos)
     network_plot(network=network, charging_pos=charging_pos)
     return charging_pos
 

@@ -167,3 +167,8 @@ venv/
 !checkpoint/.gitkeep
 !log/.gitkeep
 !fig/.gitkeep
+Include/
+Lib/
+Scripts/
+share/
+.vscode/

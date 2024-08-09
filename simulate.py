@@ -16,7 +16,6 @@ from simulator.node.node import Node
 def get_experiment(simulation_type):
     while True:
         try:
-            print('type: custom; index: 0 for custom sensors / targets')
             experiment_type = input('Enter Experiment type: ')
             experiment_index = int(input('Enter Experiment index: '))
             if simulation_type == 'start':
@@ -26,7 +25,9 @@ def get_experiment(simulation_type):
                 checkpoint_file = 'checkpoint/checkpoint_{}_{}.pkl'.format(experiment_type, experiment_index)
                 with open(checkpoint_file, 'rb') as f:
                     checkpoint = pickle.load(f)
-                return checkpoint, experiment_type, experiment_index
+                experiment_node_capacity = input('Enter your node capacity: ')
+                experiment_mc_capacity = input('Enter your mc capacity: ')
+                return checkpoint, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity
         except Exception as e:
             if simulation_type=='start':
                 print('Experiment does not exist! Please try again.')
@@ -34,8 +35,11 @@ def get_experiment(simulation_type):
                 print('Experiment checkpoint does not exist! Please try a again.')
 
 
-def start_simulating(df, experiment_type, experiment_index, loop):
+
+def start_simulating():
     print('[Simulator] Starting new experiment...')
+    df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity = get_experiment('start')
+
 
     try:
         os.makedirs('log')
@@ -49,6 +53,7 @@ def start_simulating(df, experiment_type, experiment_index, loop):
     result = csv.DictWriter(output_file, fieldnames=["nb_run", "lifetime", "dead_node"])
     result.writeheader()
 
+
     # Read data from experiment datasheet
     com_ran = df.commRange[experiment_index]
     prob = df.freq[experiment_index]
@@ -58,11 +63,12 @@ def start_simulating(df, experiment_type, experiment_index, loop):
     package_size = df.package[experiment_index]
     q_alpha = df.qt_alpha[experiment_index]
     q_gamma = df.qt_gamma[experiment_index]
-    energy = df.energy[experiment_index]
-    energy_max = df.energy[experiment_index]
+    energy = experiment_node_capacity
+    energy_max = experiment_node_capacity
     node_pos = list(literal_eval(df.node_pos[experiment_index]))
     life_time = []
-    for nb_run in range(loop):
+    
+    for nb_run in range(5):
         random.seed(nb_run)
 
         # Initialize Sensor Nodes
@@ -76,7 +82,7 @@ def start_simulating(df, experiment_type, experiment_index, loop):
         # Initialize Mobile Chargers
         mc_list = []
         for id in range(nb_mc):
-            mc = MobileCharger(id, energy=df.E_mc[experiment_index], capacity=df.E_max[experiment_index],
+            mc = MobileCharger(id, energy=experiment_mc_capacity, capacity=experiment_mc_capacity,
                             e_move=df.e_move[experiment_index],
                             e_self_charge=df.e_mc[experiment_index], velocity=df.velocity[experiment_index], depot_state = clusters)
             mc_list.append(mc)
@@ -87,7 +93,6 @@ def start_simulating(df, experiment_type, experiment_index, loop):
         # Construct Network
         net_log_file = "log/network_log_{}_{}_{}.csv".format(experiment_type, experiment_index, nb_run)
         MC_log_file = "log/MC_log_{}_{}_{}.csv".format(experiment_type, experiment_index, nb_run)
-        energy_log_file = "log/energy_log_{}_{}_{}.csv".format(experiment_type, experiment_index, nb_run)
         experiment = "{}_{}_{}".format(experiment_type, experiment_index, nb_run)
         net = Network(list_node=list_node, mc_list=mc_list, target=target, package_size=package_size, experiment=experiment)
         
@@ -128,9 +133,6 @@ def resume_simulating():
     log_file    = "log/q_learning_Kmeans_{}_{}_{}.csv".format(experiment_type, experiment_index, nb_run)
     lifetime    = net.simulate(optimizer=optimizer, t=time, dead_time=dead_time)
 
-    df = pd.read_csv("data/" + experiment_type + ".csv")
-    start_simulating(df, experiment_type, experiment_index, 1)
-
 # Read experiment data into Dataframe
 
 print(r"""
@@ -153,7 +155,7 @@ print('\t2. Resume (Requires checkpoint.pkl and log file)')
 simulation_type = int(input('Confirm your selection (1/2): '))
 print('------------------------------------------------------------------------------')
 if (simulation_type == 1):
-    df, experiment_type, experiment_index = get_experiment('start')
-    start_simulating(df, experiment_type, experiment_index, 2)
-elif (simulation_type == 2):
+    start_simulating()
+else:
     resume_simulating()
+
