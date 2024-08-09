@@ -36,8 +36,6 @@ def get_experiment(simulation_type):
             else:
                 print('Experiment checkpoint does not exist! Please try a again.')
 
-
-
 def start_simulating():
     print('[Simulator] Starting new experiment...')
     df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity = get_experiment('start')
