@@ -20,7 +20,9 @@ def get_experiment(simulation_type):
             experiment_index = int(input('Enter Experiment index: '))
             if simulation_type == 'start':
                 df = pd.read_csv("data/" + experiment_type + ".csv")
-                return df, experiment_type, experiment_index
+                experiment_node_capacity = input('Enter your node capacity: ')
+                experiment_mc_capacity = input('Enter your mc capacity: ')
+                return df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity
             else:
                 checkpoint_file = 'checkpoint/checkpoint_{}_{}.pkl'.format(experiment_type, experiment_index)
                 with open(checkpoint_file, 'rb') as f:
