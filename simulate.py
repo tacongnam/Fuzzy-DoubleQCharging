@@ -20,8 +20,8 @@ def get_experiment(simulation_type):
             experiment_index = int(input('Enter Experiment index: '))
             if simulation_type == 'start':
                 df = pd.read_csv("data/" + experiment_type + ".csv")
-                experiment_node_capacity = input('Enter your node capacity: ')
-                experiment_mc_capacity = input('Enter your mc capacity: ')
+                experiment_node_capacity = int(input('Enter your node capacity: '))
+                experiment_mc_capacity = int(input('Enter your mc capacity: '))
                 return df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity
             else:
                 checkpoint_file = 'checkpoint/checkpoint_{}_{}.pkl'.format(experiment_type, experiment_index)
@@ -41,7 +41,6 @@ def get_experiment(simulation_type):
 def start_simulating():
     print('[Simulator] Starting new experiment...')
     df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity = get_experiment('start')
-
 
     try:
         os.makedirs('log')
