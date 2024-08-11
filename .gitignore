@@ -172,3 +172,4 @@ Lib/
 Scripts/
 share/
 .vscode/
+venv/

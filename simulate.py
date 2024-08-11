@@ -20,25 +20,24 @@ def get_experiment(simulation_type):
             experiment_index = int(input('Enter Experiment index: '))
             if simulation_type == 'start':
                 df = pd.read_csv("data/" + experiment_type + ".csv")
-                experiment_node_capacity = int(input('Enter your node capacity: '))
-                experiment_mc_capacity = int(input('Enter your mc capacity: '))
-                return df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity
+                return df, experiment_type, experiment_index
             else:
                 checkpoint_file = 'checkpoint/checkpoint_{}_{}.pkl'.format(experiment_type, experiment_index)
                 with open(checkpoint_file, 'rb') as f:
                     checkpoint = pickle.load(f)
-                experiment_node_capacity = input('Enter your node capacity: ')
-                experiment_mc_capacity = input('Enter your mc capacity: ')
-                return checkpoint, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity
+                return checkpoint, experiment_type, experiment_index
         except Exception as e:
             if simulation_type=='start':
                 print('Experiment does not exist! Please try again.')
             else:
                 print('Experiment checkpoint does not exist! Please try a again.')
 
+
+
 def start_simulating():
     print('[Simulator] Starting new experiment...')
-    df, experiment_type, experiment_index, experiment_node_capacity, experiment_mc_capacity = get_experiment('start')
+    df, experiment_type, experiment_index = get_experiment('start')
+
 
     try:
         os.makedirs('log')
@@ -62,11 +61,10 @@ def start_simulating():
     package_size = df.package[experiment_index]
     q_alpha = df.qt_alpha[experiment_index]
     q_gamma = df.qt_gamma[experiment_index]
-    energy = experiment_node_capacity
-    energy_max = experiment_node_capacity
+    energy = df.energy[experiment_index]
+    energy_max = df.energy[experiment_index]
     node_pos = list(literal_eval(df.node_pos[experiment_index]))
     life_time = []
-    
     for nb_run in range(5):
         random.seed(nb_run)
 
@@ -81,7 +79,7 @@ def start_simulating():
         # Initialize Mobile Chargers
         mc_list = []
         for id in range(nb_mc):
-            mc = MobileCharger(id, energy=experiment_mc_capacity, capacity=experiment_mc_capacity,
+            mc = MobileCharger(id, energy=df.E_mc[experiment_index], capacity=df.E_max[experiment_index],
                             e_move=df.e_move[experiment_index],
                             e_self_charge=df.e_mc[experiment_index], velocity=df.velocity[experiment_index], depot_state = clusters)
             mc_list.append(mc)
