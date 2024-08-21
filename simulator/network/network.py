@@ -6,7 +6,7 @@ from simulator.network.utils import uniform_com_func, to_string, count_package_f
 
 
 class Network:
-    def __init__(self, list_node=None, mc_list=None, target=None, package_size=400, experiment=None):
+    def __init__(self, list_node=None, mc_list=None, target=None, package_size=400, experiment=None, com_range=0, list_clusters=None):
         self.node = list_node
         self.set_neighbor()
         self.set_level()
@@ -15,8 +15,11 @@ class Network:
         self.charging_pos = []
         self.package_size = package_size
 
+        self.listClusters = list_clusters
+
         self.active = False
         self.package_lost = False
+        self.com_range = com_range
 
         self.experiment = experiment
         self.net_log_file = "log/net_log_" + self.experiment + ".csv"
@@ -26,24 +29,30 @@ class Network:
 
     def set_neighbor(self):
         for node in self.node:
-            for other in self.node:
-                if other.id != node.id and distance.euclidean(node.location, other.location) <= node.com_ran:
-                    node.neighbor.append(other.id)
+            node.probe_neighbors(self)
 
     def set_level(self):
-        queue = []
         for node in self.node:
-            if distance.euclidean(node.location, para.base) < node.com_ran:
+            node.level = -1
+        tmp1 = []
+        tmp2 = []
+
+        for node in self.node: 
+            if distance.euclidean(node.location, para.base) < node.com_ran and node.is_active == True:
                 node.level = 1
-                queue.append(node.id)
-        while queue:
-            for neighbor_id in self.node[queue[0]].neighbor:
-                if not self.node[neighbor_id].level:
-                    self.node[neighbor_id].level = self.node[queue[0]].level + 1
-                    queue.append(neighbor_id)
-            queue.pop(0)
+                tmp1.append(node)        
+        while True:
+            if len(tmp1) == 0:
+                break
 
-
+            for node in tmp1:
+                for neighbor in node.potentialSender:
+                    if neighbor.is_active == True and neighbor.level == -1:
+                        tmp2.append(neighbor)
+                        neighbor.level = node.level + 1
+            tmp1 = tmp2[:]
+            tmp2.clear()        
+        return
 
     def communicate(self, func=uniform_com_func):
         return func(self)
@@ -70,6 +79,7 @@ class Network:
         return state
 
     def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
+        print('Simulating...')
         nb_dead = self.count_dead_node()
         nb_package = self.count_package()
         dead_time = dead_time
@@ -87,7 +97,7 @@ class Network:
         while t <= max_time and self.count_package()==len(self.target):
             t = t + 1
             if (t - 1) % 100 == 0:
-                print("[Network] Simulating time: {}s, lowest energy node: {:.4f} at {}".format(t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].location))
+                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
                 print('\t\tNumber of dead nodes: {}'.format(self.count_dead_node()))
                 print('\t\tNumber of packages: {}'.format(self.count_package()))
                 

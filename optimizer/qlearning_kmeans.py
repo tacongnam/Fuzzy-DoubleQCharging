@@ -24,7 +24,10 @@ class Q_learningv2:
     def update(self, mc, network, time_stem, alpha=0.5, gamma=0.5, q_max_func=q_max_function, reward_func=reward_function):
         if not len(self.list_request):
             return self.action_list[mc.state], 0.0
-
+        
+        self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
+    
+        '''
         if np.random.rand() < 0.5:
             self.set_reward(q_table=self.q1, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
             self.q1[mc.state] =  (1 - self.q_alpha) * self.q1[mc.state] + self.q_alpha * (
@@ -35,16 +38,20 @@ class Q_learningv2:
             self.q2[mc.state] =  (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (
                 self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
             self.choose_next_state(mc, self.q2, network)
+        '''
+        self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
+               self.reward + self.q_gamma * self.q_max(mc=mc, table=self.q_table, q_max_func=q_max_func))
 
-        # self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
-        #        self.reward + self.q_gamma * self.q_max(mc, q_max_func))
-        # print(self.q_table)
-        # self.choose_next_state(mc, network)
+        self.choose_next_state(mc, self.q_table, network)
+        
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
         else:
             charging_time = self.charging_time[mc.state]
-        print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
+        
+        if charging_time > 1:
+            print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
+
         # print(self.charging_time)
         return self.action_list[mc.state], charging_time
 
@@ -65,6 +72,7 @@ class Q_learningv2:
         second = second / np.sum(second)
         third = third / np.sum(third)
         self.reward = first + second + third
+        print(self.reward)
         self.reward_max = list(zip(first, second, third))
 
     def choose_next_state(self, mc, table, network):
@@ -74,6 +82,7 @@ class Q_learningv2:
             print('[Optimizer] MC #{} energy is running low ({:.2f}), and needs to rest!'.format(mc.id, mc.energy))
         else:
             mc.state = np.argmax(table[mc.state])
+            print(np.argmax(table[mc.state]))
             # print(self.reward_max[mc.state])
             # print(self.action_list[mc.state])
     

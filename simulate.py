@@ -32,12 +32,9 @@ def get_experiment(simulation_type):
             else:
                 print('Experiment checkpoint does not exist! Please try a again.')
 
-
-
 def start_simulating():
     print('[Simulator] Starting new experiment...')
     df, experiment_type, experiment_index = get_experiment('start')
-
 
     try:
         os.makedirs('log')
@@ -50,7 +47,6 @@ def start_simulating():
     output_file = open("log/q_learning_Kmeans.csv", "w")
     result = csv.DictWriter(output_file, fieldnames=["nb_run", "lifetime", "dead_node"])
     result.writeheader()
-
 
     # Read data from experiment datasheet
     com_ran = df.commRange[experiment_index]

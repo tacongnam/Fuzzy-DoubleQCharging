@@ -3,11 +3,11 @@ from scipy.spatial import distance
 
 from simulator.node.utils import to_string, find_receiver, request_function, estimate_average_energy
 from simulator.network import parameter as para
-
+from simulator.node.const import Node_Type
 
 class Node:
     def __init__(self, location=None, com_ran=None, sen_ran=None, energy=None, prob=para.prob, avg_energy=0.0,
-                 len_cp=10, id=None, is_active=True, energy_max=None, energy_thresh=None):
+                 len_cp=10, id=None, is_active=True, energy_max=None, energy_thresh=None, type_node=-1, cluster_id=-1, centroid=None):
         self.location = location  # location of sensor
         self.com_ran = com_ran  # communication range
         self.sen_ran = sen_ran  # sensing range
@@ -17,13 +17,22 @@ class Node:
         self.prob = prob  # probability of sending data
         self.check_point = [{"E_current": self.energy, "time": 0, "avg_e": 0.0}]  # check point of information of sensor
         self.used_energy = 0.0  # energy was used from last check point to now
+        self.actual_used = 0.0
         self.avg_energy = avg_energy  # average energy of sensor
         self.len_cp = len_cp  # length of check point list
         self.id = id  # identify of sensor
-        self.neighbor = []  # neighborhood of sensor
         self.is_active = is_active  # statement of sensor. If sensor dead, state is False
         self.is_request = False
+        
         self.level = 0
+        self.cluster_id = cluster_id
+        self.centroid = centroid
+
+        self.type_node = Node_Type.UNSET if type_node == -1 else type_node
+        self.neighbor = []  # neighborhood of sensor
+        self.potentialSender = [] # là danh sách con của neighbor nhưng có khả năng gửi gói tin cho self
+        self.listTargets = [] # danh sách các targets trong phạm vi có thể theo dõi, không tính tới việc sẽ theo dõi các targets này hay không
+        self.listTotalTargets = [] # là danh sách con của target, là các target trong phạm vi nhưng nó theo dõi
 
     def set_average_energy(self, func=estimate_average_energy):
         """
@@ -61,7 +70,7 @@ class Node:
         else:
             return 0
 
-    def send(self, net=None, package=None, receiver=find_receiver, is_energy_info=False):
+    def send(self, net=None, package=None, receiver=0, is_energy_info=False):
         """
         send package
         :param package:
@@ -72,21 +81,24 @@ class Node:
         """
         d0 = math.sqrt(para.EFS / para.EMP)
         package.update_path(self.id)
+        dist = distance.euclidean(self.location, para.base)
         if distance.euclidean(self.location, para.base) > self.com_ran:
-            receiver_id = receiver(self, net)
+            receiver_id = receiver.id
             if receiver_id != -1:
                 d = distance.euclidean(self.location, net.node[receiver_id].location)
                 e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
                 self.energy -= e_send * package.size
                 self.used_energy += e_send * package.size
+                self.actual_used += e_send * package.size
                 net.node[receiver_id].receive(package)
-                net.node[receiver_id].send(net, package, receiver, is_energy_info)
+                net.node[receiver_id].send(net, package, receiver=receiver.find_receiver(net), is_energy_info=is_energy_info)
         else:
             package.is_success = True
             d = distance.euclidean(self.location, para.base)
             e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
             self.energy -= e_send * package.size
             self.used_energy += e_send * package.size
+            self.actual_used += e_send * package.size
             package.update_path(-1)
         self.check_active(net)
 
@@ -98,6 +110,7 @@ class Node:
         """
         self.energy -= para.ER * package.size
         self.used_energy += para.ER * package.size
+        self.actual_used += para.ER * package.size
 
     def check_active(self, net):
         """
@@ -108,7 +121,7 @@ class Node:
         if self.energy < 0 or len(self.neighbor) == 0:
             self.is_active = False
         else:
-            a = [1 for neighbor in self.neighbor if net.node[neighbor].is_active]
+            a = [1 for neighbor in self.neighbor if neighbor.is_active]
             self.is_active = True if len(a) > 0 else False
 
     def request(self, optimizer, t, request_func=request_function):

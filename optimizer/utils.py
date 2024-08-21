@@ -29,8 +29,8 @@ def reward_function(network, mc, q_learning, state, time_stem, receive_func=find
     second = nb_target_alive / len(network.target)
     third = np.sum(w * p_hat)
     first = np.sum(e * p / E)
-    return first, second, third, charging_time
 
+    return first, second, third, charging_time
 
 def init_function(nb_action=81):
     return np.zeros((nb_action + 1, nb_action + 1), dtype=float)
@@ -75,8 +75,16 @@ def get_path(net, sensor_id, receive_func=find_receiver):
 
 def get_all_path(net, receive_func=find_receiver):
     list_path = []
-    for sensor_id, target_id in enumerate(net.target):
-        list_path.append(get_path(net, sensor_id, receive_func))
+
+    for target in net.target:
+        new_path = []
+        for node in net.node:
+            if distance.euclidean(target.location, node.location) <= node.sen_ran:
+                new_path = get_path(net, node.id, receive_func)
+                if para.base in new_path:
+                    break
+        list_path.append(new_path)
+
     return list_path
 
 
