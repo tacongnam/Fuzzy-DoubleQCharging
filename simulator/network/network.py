@@ -201,13 +201,12 @@ class Network:
             if node.energy < min_energy:
                 min_energy = node.energy
                 min_id = index
-        return index
+        return min_id
 
     def count_dead_node(self):
         count = 0
         for node in self.node:
             if node.energy <= 0:
-                print(node.id, node.energy, node.sent_through, node.actual_used)
                 count += 1
         return count
 
