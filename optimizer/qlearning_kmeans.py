@@ -45,7 +45,6 @@ class Q_learningv2:
 
         self.choose_next_state(mc, self.q_table, network)
         
-        print("Charging time:", self.charging_time)
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
         else:
@@ -84,7 +83,6 @@ class Q_learningv2:
             print('[Optimizer] MC #{} energy is running low ({:.2f}), and needs to rest!'.format(mc.id, mc.energy))
         else:
             mc.state = np.argmax(table[mc.state])
-            print(np.argmax(table[mc.state]))
             # print(self.reward_max[mc.state])
             # print(self.action_list[mc.state])
     

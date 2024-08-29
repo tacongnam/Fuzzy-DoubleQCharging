@@ -88,10 +88,6 @@ class Node:
             receiver_id = receiver.id
             if receiver_id != -1:
                 d = distance.euclidean(self.location, receiver.location)
-
-                if d > self.com_ran:
-                    print("\tNode", self.id, receiver.id)
-
                 e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
                 self.energy -= e_send * package.size
                 self.used_energy += e_send * package.size

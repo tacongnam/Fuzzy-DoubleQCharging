@@ -70,7 +70,6 @@ class Network:
         for index, node in enumerate(self.node):
             if node.energy < node.energy_thresh:
                 node.request(index=index, optimizer=optimizer, t=t)
-                print(self.node[index].id, node.id)
                 self.request_id.append(index)
             else:
                 node.is_request = False
