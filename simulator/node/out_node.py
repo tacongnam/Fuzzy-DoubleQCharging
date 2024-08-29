@@ -20,7 +20,7 @@ class OutNode(Node):
         distance_min = 10000007
         node_min = Node(id = -1)
         for node in self.neighbor:
-            if(node.type_node == Node_Type.RELAY_NODE and node.send_cluster_id.id == self.cluster_id): 
+            if node.is_active == True and (node.type_node == Node_Type.RELAY_NODE and node.send_cluster_id.id == self.cluster_id): 
                 if distance.euclidean(node.location, self.location) < distance_min:
                     node_min = node
                     distance_min = distance.euclidean(node.location, self.location)
@@ -32,7 +32,7 @@ class OutNode(Node):
         self.potentialSender.clear()
 
         for node in network.node:
-            if self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
+            if  node.is_active == True and self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
                 self.neighbor.append(node)
                 if(node.type_node in [Node_Type.IN_NODE, Node_Type.SENSOR_NODE, Node_Type.CONNECTOR_NODE] and self.cluster_id == node.cluster_id):
                     self.potentialSender.append(node)

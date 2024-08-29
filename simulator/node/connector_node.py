@@ -21,7 +21,7 @@ class ConnectorNode(Node):
         node_min = Node(id = -1)
             
         for node in self.neighbor:
-            if (node.type_node in [Node_Type.IN_NODE, Node_Type.OUT_NODE, Node_Type.CONNECTOR_NODE] 
+            if node.is_active == True and (node.type_node in [Node_Type.IN_NODE, Node_Type.OUT_NODE, Node_Type.CONNECTOR_NODE] 
                 and node.cluster_id == self.cluster_id and self.level > node.level): 
             # if(name == "ConnectorNode" or name == "InNode" or name == "OutNode") and self.cluster_id == node.cluster_id:
             # với connector node thì cần phải xét level nếu không sẽ gửi lộn
@@ -37,7 +37,7 @@ class ConnectorNode(Node):
         self.potentialSender.clear()
 
         for node in network.node:
-            if self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
+            if node.is_active == True and self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
                 self.neighbor.append(node)
                 if(node.type_node in [Node_Type.SENSOR_NODE, Node_Type.CONNECTOR_NODE] and self.cluster_id == node.cluster_id):
                     self.potentialSender.append(node)

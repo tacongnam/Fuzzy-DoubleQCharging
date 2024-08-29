@@ -101,7 +101,10 @@ class Network:
                 writer.writeheader()
         
         self.t = t
-        while self.t <= max_time and self.count_package()==len(self.target):
+        if self.count_package()!=len(self.target):
+            return 
+        
+        while self.t <= max_time:
             self.t = self.t + 1
             if (self.t - 1) % 100 == 0:
                 print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(self.t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
@@ -129,6 +132,9 @@ class Network:
                 for mc in self.mc_list:
                     print("\t\tMC #{} is {} at {}".format(mc.id, mc.get_status(), mc.current))
 
+                # for node in self.node:
+                #    print("\tNode", node.id, node.energy)
+
             if (self.t-1) % 500 == 0 and self.t > 1:
                 set_checkpoint(t=self.t, network=self, optimizer=optimizer, dead_time=dead_time)
 
@@ -138,8 +144,14 @@ class Network:
                 self.active = True
             ######################################
 
+            past_dead = self.count_dead_node()
             state = self.run_per_second(self.t, optimizer)
             current_dead = self.count_dead_node()
+
+            if past_dead != current_dead:
+                self.set_neighbor()
+                self.set_level()
+            
             current_package = self.count_package()
 
             # for node in self.node:
@@ -149,6 +161,7 @@ class Network:
                 if current_package < len(self.target):
                     self.package_lost = True
                     dead_time = self.t
+
             if current_dead != nb_dead or current_package != nb_package:
                 network_info = {
                     'time_stamp' : self.t,
@@ -184,11 +197,11 @@ class Network:
     def find_min_node(self):
         min_energy = 10 ** 10
         min_id = -1
-        for node in self.node:
+        for index, node in enumerate(self.node):
             if node.energy < min_energy:
                 min_energy = node.energy
-                min_id = node.id
-        return min_id
+                min_id = index
+        return index
 
     def count_dead_node(self):
         count = 0

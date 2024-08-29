@@ -53,7 +53,7 @@ class InNode(Node):
         self.potentialSender.clear()
 
         for node in network.node:
-            if self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
+            if node.is_active == True and self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
                 self.neighbor.append(node)
                 if node.type_node == Node_Type.RELAY_NODE and self.cluster_id == node.receive_cluster_id.id:
                     self.potentialSender.append(node)
@@ -69,7 +69,7 @@ class InNode(Node):
     
     def get_out_node_list(self):
         for node in self.neighbor:
-            if(node.type_node == Node_Type.OUT_NODE and node.is_active == True and self.cluster_id == node.cluster_id):
+            if node.is_active == True and (node.type_node == Node_Type.OUT_NODE and node.is_active == True and self.cluster_id == node.cluster_id):
                 self.out_node_list.append(node)
         self.out_node_number = len(self.out_node_list)
         self.max_package_index = self.out_node_number * self.rr_max_unit * self.rr_max_cycle

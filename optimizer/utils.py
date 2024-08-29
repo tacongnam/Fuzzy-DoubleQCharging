@@ -100,6 +100,7 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     # request_id = [request["id"] for request in network.mc.list_request]
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
     E_min_crisp = network.node[network.find_min_node()].energy
+    max_energy = network.node[0].energy_max
     L_r_crisp = len(q_learning.list_request)
     E_min = ctrl.Antecedent(np.linspace(0, 0.3, num = 1001), 'E_min')
     L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
@@ -108,9 +109,9 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     L_r['M'] = fuzz.trimf(L_r.universe, [2, 6, 10])
     L_r['H'] = fuzz.trapmf(L_r.universe, [6, 10, len(network.node), len(network.node)])
 
-    E_min['L'] = fuzz.trapmf(E_min.universe, [0, 0, 2.5 / 10 * 0.3, 5 / 10 * 0.3])
-    E_min['M'] = fuzz.trimf(E_min.universe, [2.5 / 10 * 0.3, 5.0 / 10 * 0.3, 7.5 / 10 * 0.3])
-    E_min['H'] = fuzz.trapmf(E_min.universe, [5 / 10 * 0.3, 7.5 / 10 * 0.3, 10 / 10 * 0.3, 10 / 10 * 0.3])
+    E_min['L'] = fuzz.trapmf(E_min.universe, [0, 0, 0.25 * max_energy, 0.5 * max_energy])
+    E_min['M'] = fuzz.trimf(E_min.universe, [0.25 * max_energy, 0.5 * max_energy, 0.75 * max_energy])
+    E_min['H'] = fuzz.trapmf(E_min.universe, [0.5 * max_energy, 0.75 * max_energy, max_energy, max_energy])
 
     Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/3])
     Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/3, 2/3])

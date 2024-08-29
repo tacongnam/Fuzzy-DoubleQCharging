@@ -30,7 +30,7 @@ class RelayNode(Node):
             distance_min = 10000007
             node_min = Node(id = -1)
             
-            if(node.type_node == Node_Type.RELAY_NODE and self.send_cluster_id.id == node.send_cluster_id.id 
+            if node.is_active == True and (node.type_node == Node_Type.RELAY_NODE and self.send_cluster_id.id == node.send_cluster_id.id 
                and self.receive_cluster_id.id == node.receive_cluster_id.id):
                 
                 location_end = para.base
@@ -49,7 +49,7 @@ class RelayNode(Node):
                     return node_min
               
         for node in self.neighbor:
-            if node.type_node == Node_Type.IN_NODE and node.cluster_id == self.receive_cluster_id.id:
+            if  node.is_active == True and node.type_node == Node_Type.IN_NODE and node.cluster_id == self.receive_cluster_id.id:
             # if(node.__class__.__name__ == "InNode") and self.level > node.level:
                 return node
 
@@ -60,7 +60,7 @@ class RelayNode(Node):
         self.potentialSender.clear()
 
         for node in network.node:
-            if self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
+            if  node.is_active == True and self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
                 self.neighbor.append(node)
                 if(node.type_node == Node_Type.RELAY_NODE and self.send_cluster_id.id == node.send_cluster_id.id 
                    and self.receive_cluster_id.id == node.receive_cluster_id.id):
