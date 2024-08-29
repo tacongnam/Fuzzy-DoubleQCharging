@@ -19,7 +19,7 @@ class ConnectorNode(Node):
         
         distance_min = 10000007
         node_min = Node(id = -1)
-
+            
         for node in self.neighbor:
             if (node.type_node in [Node_Type.IN_NODE, Node_Type.OUT_NODE, Node_Type.CONNECTOR_NODE] 
                 and node.cluster_id == self.cluster_id and self.level > node.level): 

@@ -62,14 +62,16 @@ class Simulation:
         clusters_data = self.net_argc['Clusters']
 
         list_clusters[-1] = Cluster(-1, para.base)
+        target_id = 0
         for cluster in clusters_data:
             list_clusters[int(cluster['cluster_id'])] = Cluster(int(cluster['cluster_id']),  cluster['centroid'])
             
             for target in cluster['list_targets']:
-                new_target = Target(target, int(cluster['cluster_id']))
+                new_target = Target(target_id, target, int(cluster['cluster_id']))
                 target_pos.append(new_target)
+                target_id += 1
         
-        print(list_clusters)
+        # print(list_clusters)
         print('Build Sensors - Build targets: Done')
         list_node = []
 
@@ -144,7 +146,9 @@ class Simulation:
 
         print('Build Sensors - Build relay node: Done')
 
-        return list_node, target_pos, list_clusters
+        list_sorted = sorted(list_node, key=lambda x: x.cluster_id, reverse=True)
+
+        return list_sorted, target_pos, list_clusters
 
     def runSimulator(self, run_times, E_mc):
         try:
@@ -171,7 +175,7 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=10, velocity=5, depot_state = self.clusters)
+                mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters)
                 mc_list.append(mc)
 
             # Construct Network
@@ -267,4 +271,4 @@ print(r"""
 
 p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
-p.runSimulator(1, 108000)
+p.runSimulator(1, 50)

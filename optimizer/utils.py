@@ -12,16 +12,17 @@ from skfuzzy import control as ctrl
 from simulator.network import parameter as para
 from simulator.node.utils import find_receiver
 
+BASE = (para.base[0], para.base[1])
 
 def q_max_function(q_table, state):
     temp = [max(row) if index != state else -float("inf") for index, row in enumerate(q_table)]
     return np.asarray(temp)
 
 
-def reward_function(network, mc, q_learning, state, time_stem, receive_func=find_receiver):
+def reward_function(network, mc, q_learning, state, time_stem):
     alpha = q_learning.alpha
     charging_time = get_charging_time(network, mc, q_learning, time_stem=time_stem, state=state, alpha=alpha)
-    w, nb_target_alive = get_weight(network, mc, q_learning, state, charging_time, receive_func)
+    w, nb_target_alive = get_weight(network, mc, q_learning, state, charging_time)
     p = get_charge_per_sec(network, q_learning, state)
     p_hat = p / np.sum(p)
     E = np.asarray([network.node[request["id"]].energy for request in q_learning.list_request])
@@ -35,9 +36,9 @@ def reward_function(network, mc, q_learning, state, time_stem, receive_func=find
 def init_function(nb_action=81):
     return np.zeros((nb_action + 1, nb_action + 1), dtype=float)
 
-def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_receiver):
+def get_weight(net, mc, q_learning, action_id, charging_time):
     p = get_charge_per_sec(net, q_learning, action_id)
-    all_path = get_all_path(net, receive_func)
+    all_path = get_all_path(net)
     time_move = distance.euclidean(q_learning.action_list[mc.state],
                                    q_learning.action_list[action_id]) / mc.velocity
     list_dead = []
@@ -56,32 +57,33 @@ def get_weight(net, mc, q_learning, action_id, charging_time, receive_func=find_
     total_weight = sum(w) + len(w) * 10 ** -3
     w = np.asarray([(item + 10 ** -3) / total_weight for item in w])
     nb_target_alive = 0
+    
     for path in all_path:
-        if para.base in path and not (set(list_dead) & set(path)):
+        if BASE in path and not (set(list_dead) & set(path)):
             nb_target_alive += 1
     return w, nb_target_alive
 
 
-def get_path(net, sensor_id, receive_func=find_receiver):
-    path = [sensor_id]
-    if distance.euclidean(net.node[sensor_id].location, para.base) <= net.node[sensor_id].com_ran:
-        path.append(para.base)
+def get_path(net, sensor):
+    path = [sensor.id]
+    if distance.euclidean(sensor.location, para.base) <= sensor.com_ran:
+        path.append(BASE)
     else:
-        receive_id = receive_func(net=net, node=net.node[sensor_id])
-        if receive_id != -1:
-            path.extend(get_path(net, receive_id, receive_func))
+        receive = sensor.find_receiver(net=net)
+        if receive.id != -1:
+            path.extend(get_path(net, receive))
     return path
 
 
-def get_all_path(net, receive_func=find_receiver):
+def get_all_path(net):
     list_path = []
 
     for target in net.target:
         new_path = []
         for node in net.node:
             if distance.euclidean(target.location, node.location) <= node.sen_ran:
-                new_path = get_path(net, node.id, receive_func)
-                if para.base in new_path:
+                new_path = get_path(net, node)
+                if BASE in new_path:
                     break
         list_path.append(new_path)
 
@@ -99,16 +101,16 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
     E_min_crisp = network.node[network.find_min_node()].energy
     L_r_crisp = len(q_learning.list_request)
-    E_min = ctrl.Antecedent(np.linspace(0, 10, num = 1001), 'E_min')
+    E_min = ctrl.Antecedent(np.linspace(0, 0.3, num = 1001), 'E_min')
     L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
     Theta = ctrl.Consequent(np.linspace(0, 1, num = 101), 'Theta')
     L_r['L'] = fuzz.trapmf(L_r.universe, [0, 0, 2, 6])
     L_r['M'] = fuzz.trimf(L_r.universe, [2, 6, 10])
     L_r['H'] = fuzz.trapmf(L_r.universe, [6, 10, len(network.node), len(network.node)])
 
-    E_min['L'] = fuzz.trapmf(E_min.universe, [0, 0, 2.5, 5])
-    E_min['M'] = fuzz.trimf(E_min.universe, [2.5, 5.0, 7.5])
-    E_min['H'] = fuzz.trapmf(E_min.universe, [5, 7.5, 10, 10])
+    E_min['L'] = fuzz.trapmf(E_min.universe, [0, 0, 2.5 / 10 * 0.3, 5 / 10 * 0.3])
+    E_min['M'] = fuzz.trimf(E_min.universe, [2.5 / 10 * 0.3, 5.0 / 10 * 0.3, 7.5 / 10 * 0.3])
+    E_min['H'] = fuzz.trapmf(E_min.universe, [5 / 10 * 0.3, 7.5 / 10 * 0.3, 10 / 10 * 0.3, 10 / 10 * 0.3])
 
     Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/3])
     Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/3, 2/3])
@@ -136,9 +138,10 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     q_learning.alpha = alpha
     # energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
     energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
+    print(energy_min)
     s1 = []  # list of node in request list which has positive charge
     s2 = []  # list of node not in request list which has negative charge
-    for node in network.node:
+    for index, node in enumerate(network.node):
         d = distance.euclidean(q_learning.action_list[state], node.location)
         p = para.alpha / (d + para.beta) ** 2
         p1 = 0
@@ -150,9 +153,9 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
                 d = distance.euclidean(other_mc.end, node.location)
                 p1 += (para.alpha / (d + para.beta) ** 2)*(other_mc.end_time - other_mc.arrival_time)
         if node.energy - time_move * node.avg_energy + p1 < energy_min and p - node.avg_energy > 0:
-            s1.append((node.id, p, p1))
+            s1.append((index, p, p1))
         if node.energy - time_move * node.avg_energy + p1 > energy_min and p - node.avg_energy < 0:
-            s2.append((node.id, p, p1))
+            s2.append((index, p, p1))
     t = []
 
     for index, p, p1 in s1:

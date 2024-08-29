@@ -32,7 +32,9 @@ class Node:
         self.neighbor = []  # neighborhood of sensor
         self.potentialSender = [] # là danh sách con của neighbor nhưng có khả năng gửi gói tin cho self
         self.listTargets = [] # danh sách các targets trong phạm vi có thể theo dõi, không tính tới việc sẽ theo dõi các targets này hay không
-        self.listTotalTargets = [] # là danh sách con của target, là các target trong phạm vi nhưng nó theo dõi
+
+        self.sent_through = 0
+        self.dist_sent = 0
 
     def set_average_energy(self, func=estimate_average_energy):
         """
@@ -85,20 +87,28 @@ class Node:
         if distance.euclidean(self.location, para.base) > self.com_ran:
             receiver_id = receiver.id
             if receiver_id != -1:
-                d = distance.euclidean(self.location, net.node[receiver_id].location)
+                d = distance.euclidean(self.location, receiver.location)
+
+                if d > self.com_ran:
+                    print("\tNode", self.id, receiver.id)
+
                 e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
                 self.energy -= e_send * package.size
                 self.used_energy += e_send * package.size
                 self.actual_used += e_send * package.size
-                net.node[receiver_id].receive(package)
-                net.node[receiver_id].send(net, package, receiver=receiver.find_receiver(net), is_energy_info=is_energy_info)
+                self.sent_through += 1
+                self.dist_sent += d
+                receiver.receive(package)
+                receiver.send(net, package, receiver=receiver.find_receiver(net=net), is_energy_info=is_energy_info)
         else:
             package.is_success = True
             d = distance.euclidean(self.location, para.base)
             e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
+            self.dist_sent += d
             self.energy -= e_send * package.size
             self.used_energy += e_send * package.size
             self.actual_used += e_send * package.size
+            self.sent_through += 1
             package.update_path(-1)
         self.check_active(net)
 
@@ -124,7 +134,7 @@ class Node:
             a = [1 for neighbor in self.neighbor if neighbor.is_active]
             self.is_active = True if len(a) > 0 else False
 
-    def request(self, optimizer, t, request_func=request_function):
+    def request(self, index, optimizer, t, request_func=request_function):
         """
         send a message to mc if the energy is below a threshold
         :param mc: mobile charger
@@ -135,7 +145,7 @@ class Node:
         self.set_check_point(t)
         # print(self.check_point)
         if not self.is_request:
-            request_func(self, optimizer, t)
+            request_func(self, index, optimizer, t)
             self.is_request = True
 
     def print_node(self, func=to_string):

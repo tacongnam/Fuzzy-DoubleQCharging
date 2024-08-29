@@ -10,15 +10,15 @@ def uniform_com_func(net):
     sent_target = np.zeros(len(net.target), dtype = bool)
     
     for node in net.node:
-        for id in range(len(net.target)):
-            if sent_target[id] == False and distance.euclidean(node.location, net.target[id].location) <= node.sen_ran:
+        for target in node.listTargets:
+            if sent_target[target.id] == False:
                 temp_package = Package(is_energy_info=True)
                 node.send(net, temp_package, receiver=node.find_receiver(net))
 
                 if temp_package.path[-1] == -1:
                     package = Package(is_energy_info=False)
                     node.send(net, package, receiver=node.find_receiver(net))
-                    sent_target[id] = True
+                    sent_target[target.id] = True
     return True
 
 
@@ -36,15 +36,15 @@ def count_package_function(net):
 
     sent_target = np.zeros(len(net.target), dtype = bool)
 
-    for id in range(len(net.target)):
-        for node in net.node:
-            if distance.euclidean(node.location, net.target[id].location) <= node.sen_ran:
+    for node in net.node:
+        for target in node.listTargets:
+            if sent_target[target.id] == False:
                 package = Package(is_energy_info=True)
                 node.send(net, package, receiver=node.find_receiver(net))
 
                 if package.path[-1] == -1:
+                    sent_target[target.id] = True
                     count += 1
-                    break
     return count
 
 def set_checkpoint(t=0, network=None, optimizer=None, dead_time=0):

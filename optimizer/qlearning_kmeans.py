@@ -23,7 +23,7 @@ class Q_learningv2:
 
     def update(self, mc, network, time_stem, alpha=0.5, gamma=0.5, q_max_func=q_max_function, reward_func=reward_function):
         if not len(self.list_request):
-            return self.action_list[mc.state], 0.0
+            return self.action_list[mc.state], -1.0
         
         self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
     
@@ -39,11 +39,13 @@ class Q_learningv2:
                 self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
             self.choose_next_state(mc, self.q2, network)
         '''
+
         self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
                self.reward + self.q_gamma * self.q_max(mc=mc, table=self.q_table, q_max_func=q_max_func))
 
         self.choose_next_state(mc, self.q_table, network)
         
+        print("Charging time:", self.charging_time)
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
         else:
@@ -63,7 +65,7 @@ class Q_learningv2:
         second = np.asarray([0.0 for _ in self.action_list], dtype=float)
         third = np.asarray([0.0 for _ in self.action_list], dtype=float)
         for index, row in enumerate(q_table):
-            temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem, receive_func=find_receiver)
+            temp = reward_func(network=network, mc=mc, q_learning=self, state=index, time_stem=time_stem)
             first[index] = temp[0]
             second[index] = temp[1]
             third[index] = temp[2]

@@ -41,17 +41,17 @@ def find_receiver(node, net):
     """
     if not node.is_active:
         return -1
-    candidate = [neighbor_id for neighbor_id in node.neighbor if
-                 net.node[neighbor_id].level < node.level and net.node[neighbor_id].is_active]
+    candidate = [neighbor for neighbor in node.neighbor if
+                 neighbor.level < node.level and neighbor.is_active]
     if candidate:
-        d = [distance.euclidean(net.node[candidate_id].location, para.base) for candidate_id in candidate]
+        d = [distance.euclidean(node.location, para.base) for node in candidate]
         id_min = np.argmin(d)
         return candidate[id_min]
     else:
         return -1
 
 
-def request_function(node, optimizer, t):
+def request_function(node, index, optimizer, t):
     """
     add a message to request list of mc.
     :param node: the node request
@@ -60,7 +60,7 @@ def request_function(node, optimizer, t):
     :return: None
     """
     optimizer.list_request.append(
-        {"id": node.id, "energy": node.energy, "avg_energy": node.avg_energy, "energy_estimate": node.energy,
+        {"id": index, "energy": node.energy, "avg_energy": node.avg_energy, "energy_estimate": node.energy,
          "time": t})
 
 

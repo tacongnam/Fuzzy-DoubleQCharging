@@ -10,6 +10,7 @@ class Network:
         self.node = list_node
         self.set_neighbor()
         self.set_level()
+
         self.mc_list = mc_list
         self.target = target
         self.charging_pos = []
@@ -26,6 +27,12 @@ class Network:
         self.mc_log_file = "log/mc_log_" + self.experiment + ".csv"
         self.request_id = []
 
+        self.t = 0
+        
+        for n in self.node:
+            for t in self.target:
+                if distance.euclidean(n.location, t.location) <= n.sen_ran:
+                    n.listTargets.append(t)
 
     def set_neighbor(self):
         for node in self.node:
@@ -62,7 +69,8 @@ class Network:
         self.request_id = []
         for index, node in enumerate(self.node):
             if node.energy < node.energy_thresh:
-                node.request(optimizer=optimizer, t=t)
+                node.request(index=index, optimizer=optimizer, t=t)
+                print(self.node[index].id, node.id)
                 self.request_id.append(index)
             else:
                 node.is_request = False
@@ -93,16 +101,16 @@ class Network:
                 writer = csv.DictWriter(mc_log, fieldnames=['time_stamp', 'id', 'starting_point', 'destination_point', 'decision_id', 'charging_time', 'moving_time'])
                 writer.writeheader()
         
-        t = t
-        while t <= max_time and self.count_package()==len(self.target):
-            t = t + 1
-            if (t - 1) % 100 == 0:
-                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
+        self.t = t
+        while self.t <= max_time and self.count_package()==len(self.target):
+            self.t = self.t + 1
+            if (self.t - 1) % 100 == 0:
+                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(self.t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
                 print('\t\tNumber of dead nodes: {}'.format(self.count_dead_node()))
                 print('\t\tNumber of packages: {}'.format(self.count_package()))
                 
                 network_info = {
-                    'time_stamp' : t,
+                    'time_stamp' : self.t,
                     'number_of_dead_nodes' : self.count_dead_node(),
                     'number_of_monitored_target' : self.count_package(),
                     'lowest_node_energy': round(self.node[self.find_min_node()].energy, 3),
@@ -122,25 +130,29 @@ class Network:
                 for mc in self.mc_list:
                     print("\t\tMC #{} is {} at {}".format(mc.id, mc.get_status(), mc.current))
 
-            if (t-1) % 500 == 0 and t > 1:
-                set_checkpoint(t=t, network=self, optimizer=optimizer, dead_time=dead_time)
+            if (self.t-1) % 500 == 0 and self.t > 1:
+                set_checkpoint(t=self.t, network=self, optimizer=optimizer, dead_time=dead_time)
 
             ######################################
-            if t == 200:
+            if self.t == 200:
                 optimizer.net_partition(net=self)
                 self.active = True
             ######################################
 
-            state = self.run_per_second(t, optimizer)
+            state = self.run_per_second(self.t, optimizer)
             current_dead = self.count_dead_node()
             current_package = self.count_package()
+
+            # for node in self.node:
+            #    print("\tNode", node.id, node.energy, node.sent_through, node.actual_used, node.dist_sent)
+
             if not self.package_lost:
                 if current_package < len(self.target):
                     self.package_lost = True
-                    dead_time = t
+                    dead_time = self.t
             if current_dead != nb_dead or current_package != nb_package:
                 network_info = {
-                    'time_stamp' : t,
+                    'time_stamp' : self.t,
                     'number_of_dead_nodes' : self.count_dead_node(),
                     'number_of_monitored_target' : self.count_package(),
                     'lowest_node_energy': round(self.node[self.find_min_node()].energy, 3),
@@ -183,10 +195,13 @@ class Network:
         count = 0
         for node in self.node:
             if node.energy <= 0:
+                print(node.id, node.energy, node.sent_through, node.actual_used)
                 count += 1
         return count
 
     def count_package(self, count_func=count_package_function):
+        self.set_neighbor()
+        self.set_level()
         count = count_func(self)
         return count
 
