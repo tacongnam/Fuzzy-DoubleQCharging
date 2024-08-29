@@ -51,7 +51,6 @@ class MobileCharger:
         if distance.euclidean(self.start, self.end) > 1 and distance.euclidean(self.current, self.end) < 1:
             self.is_stand = True
             self.current = self.end
-            print("MC", self.id, "charging at", self.end)
         elif distance.euclidean(self.current, self.end) >= 1:
             self.is_stand = False
 
