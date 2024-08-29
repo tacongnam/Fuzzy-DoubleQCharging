@@ -271,4 +271,4 @@ print(r"""
 
 p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
-p.runSimulator(1, 15000)
+p.runSimulator(1, 54000)

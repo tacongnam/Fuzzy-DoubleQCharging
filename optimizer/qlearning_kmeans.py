@@ -73,7 +73,7 @@ class Q_learningv2:
         second = second / np.sum(second)
         third = third / np.sum(third)
         self.reward = first + second + third
-        print(self.reward)
+        # print(self.reward)
         self.reward_max = list(zip(first, second, third))
 
     def choose_next_state(self, mc, table, network):
