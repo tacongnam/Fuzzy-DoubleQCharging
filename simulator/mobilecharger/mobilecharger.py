@@ -7,7 +7,7 @@ from simulator.network import parameter as para
 
 class MobileCharger:
     def __init__(self, id, energy=None, e_move=None, start=para.depot, end=para.depot, velocity=None,
-                 e_self_charge=None, capacity=None, depot_state=80):
+                 e_self_charge=None, capacity=None, depot_state=80, double_q=True):
         self.id = id
         self.is_stand = False  # is true if mc stand and charge
         self.is_self_charge = False  # is true if mc is charged
@@ -26,6 +26,12 @@ class MobileCharger:
         self.e_self_charge = e_self_charge  # energy receive per second
         self.velocity = velocity  # velocity of mc
         self.state = depot_state # Current state in Q_table
+
+        self.double_q = double_q
+        if self.double_q == True:
+            print("MC", self.id, "enable double q-learning")
+        else:
+            print("MC", self.id, "enable single q-learning")
 
     def get_status(self):
         if not self.is_active:
@@ -58,8 +64,11 @@ class MobileCharger:
         else:
             self.is_self_charge = False
 
-    def get_next_location(self, network, time_stem, optimizer=None):
-        next_location, charging_time = optimizer.update(self, network, time_stem)
+    def get_next_location(self, network, time_stem, optimizer=None, update_path=False):
+        if update_path == True:
+            optimizer.update_all_path(network)
+
+        next_location, charging_time = optimizer.update(self, network, time_stem, doubleq=self.double_q)
         if charging_time == -1:
             return 
         
@@ -83,7 +92,7 @@ class MobileCharger:
             }
             writer.writerow(mc_info)
 
-    def run(self, time_stem, net=None, optimizer=None):
+    def run(self, time_stem, net=None, optimizer=None, update_path=False):
         # print(self.energy, self.start, self.end, self.current)
         if ((not self.is_active) and optimizer.list_request) or abs(time_stem - self.end_time) < 1:
             self.is_active = True
@@ -99,7 +108,7 @@ class MobileCharger:
             if not optimizer.list_request:
                 self.is_active = False
 
-            self.get_next_location(network=net, time_stem=time_stem, optimizer=optimizer)
+            self.get_next_location(network=net, time_stem=time_stem, optimizer=optimizer, update_path=update_path)
         else:
             if self.is_active:
                 if not self.is_stand:

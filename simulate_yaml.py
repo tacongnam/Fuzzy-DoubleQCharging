@@ -51,6 +51,11 @@ class Simulation:
         self.node_pos = self.net_argc['nodes']
         self.energy_thresh = 0.4 * self.energy #net_argc['node_phy_spe']['threshold']  
 
+        self.double_q = False
+        dq = input("Double Q Learning or not? Y / N: ")
+        if dq == "Y":
+            self.double_q = True
+
     def buildSensor(self):
         # Build target
         list_clusters = {}
@@ -171,7 +176,7 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters)
+                mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=self.double_q)
                 mc_list.append(mc)
 
             # Construct Network
@@ -183,7 +188,7 @@ class Simulation:
             # self.PrintOutput(net)
             
             # Initialize Q-learning Optimizer
-            q_learning = Q_learningv2(nb_action=self.clusters, alpha=self.alpha, q_alpha=self.q_alpha, q_gamma=self.q_gamma)
+            q_learning = Q_learningv2(net=net, nb_action=self.clusters, alpha=self.alpha, q_alpha=self.q_alpha, q_gamma=self.q_gamma)
         
             print("[Simulator] Initializing experiment, repetition {}:\n".format(nb_run))
             print("[Simulator] Network:")
@@ -204,6 +209,8 @@ class Simulation:
         confidence = 0.95
         h = sem(life_time) * t.ppf((1 + confidence) / 2, len(life_time) - 1)
         result.writerow({"nb_run": np.mean(life_time), "lifetime": h, "dead_node": 0})
+
+        return net
 
     def PrintOutput(self, net):
         plt.figure() 

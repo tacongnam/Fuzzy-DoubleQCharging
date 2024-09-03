@@ -38,7 +38,8 @@ def init_function(nb_action=81):
 
 def get_weight(net, mc, q_learning, action_id, charging_time):
     p = get_charge_per_sec(net, q_learning, action_id)
-    all_path = get_all_path(net)
+    
+    all_path = q_learning.all_path
 
     time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
     list_dead = []
@@ -98,12 +99,8 @@ def get_charge_per_sec(net, q_learning, state):
                                           q_learning.action_list[state]) + para.beta) ** 2 for
          request in q_learning.list_request])
 
-def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1):
-    # request_id = [request["id"] for request in network.mc.list_request]
-    time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
-    E_min_crisp = network.node[network.find_min_node()].energy
+def FLCDS_model(network=None):
     max_energy = network.node[0].energy_max
-    L_r_crisp = len(q_learning.list_request)
     
     E_min = ctrl.Antecedent(np.linspace(0, max_energy, num = 1001), 'E_min')
     L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
@@ -136,6 +133,17 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
                              R4, R5, R6,
                              R7, R8, R9])
     FLCDS = ctrl.ControlSystemSimulation(FLCDS_ctrl)
+
+    return FLCDS
+
+def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, state=None, alpha=0.1):
+    time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
+
+    # request_id = [request["id"] for request in network.mc.list_request]
+    FLCDS = q_learning.FLCDS    
+    L_r_crisp = len(q_learning.list_request)
+    E_min_crisp = network.node[network.find_min_node()].energy
+
     FLCDS.input['L_r'] = L_r_crisp
     FLCDS.input['E_min'] = E_min_crisp
     FLCDS.compute()

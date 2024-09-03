@@ -27,6 +27,8 @@ class Network:
         self.request_id = []
 
         self.t = 0
+
+        self.update_path = False
         
         for t in self.target:
             for n in self.node:
@@ -71,7 +73,7 @@ class Network:
     def communicate(self, func=uniform_com_func):
         return func(self)
 
-    def run_per_second(self, t, optimizer):
+    def run_per_second(self, t, optimizer, update_path):
         state = self.communicate()
         self.request_id = []
         for index, node in enumerate(self.node):
@@ -88,7 +90,7 @@ class Network:
             
         if optimizer and self.active:
             for mc in self.mc_list:
-                mc.run(time_stem=t, net=self, optimizer=optimizer)
+                mc.run(time_stem=t, net=self, optimizer=optimizer, update_path=update_path)
         return state
 
     def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
@@ -114,18 +116,19 @@ class Network:
         
         past_dead = nb_dead
         past_package = nb_package
+        update_path = True
 
         while self.t <= max_time:
             self.t = self.t + 1
-            if (self.t - 1) % 100 == 0:
+            if (self.t - 1) % 50 == 0:
                 print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(self.t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
-                print('\t\tNumber of dead nodes: {}'.format(self.count_dead_node()))
-                print('\t\tNumber of packages: {}'.format(self.count_package()))
+                print('\t\tNumber of dead nodes: {}'.format(past_dead))
+                print('\t\tNumber of packages: {}'.format(past_package))
                 
                 network_info = {
                     'time_stamp' : self.t,
-                    'number_of_dead_nodes' : self.count_dead_node(),
-                    'number_of_monitored_target' : self.count_package(),
+                    'number_of_dead_nodes' : past_dead,
+                    'number_of_monitored_target' : past_package,
                     'lowest_node_energy': round(self.node[self.find_min_node()].energy, 3),
                     'lowest_node_location': self.node[self.find_min_node()].location,
                     'theta': optimizer.alpha,     
@@ -155,11 +158,14 @@ class Network:
                 self.active = True
             ######################################
 
-            state = self.run_per_second(self.t, optimizer)
+            state = self.run_per_second(self.t, optimizer, update_path)
             current_dead = self.count_dead_node()
 
             if past_dead != current_dead:
                 self.reset_neighbor()
+                update_path = True
+            else:
+                update_path = False
             
             current_package = self.count_package()
 
@@ -174,8 +180,8 @@ class Network:
             if (current_dead != nb_dead and past_dead != current_dead) or (current_package != nb_package and current_package != past_package):
                 network_info = {
                     'time_stamp' : self.t,
-                    'number_of_dead_nodes' : self.count_dead_node(),
-                    'number_of_monitored_target' : self.count_package(),
+                    'number_of_dead_nodes' : current_dead,
+                    'number_of_monitored_target' : current_package,
                     'lowest_node_energy': round(self.node[self.find_min_node()].energy, 3),
                     'lowest_node_location': self.node[self.find_min_node()].location,
                     'theta': optimizer.alpha,
@@ -190,8 +196,7 @@ class Network:
                 with open(self.net_log_file, 'a') as information_log:
                     node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
-                continue
-                
+            
             past_dead = current_dead
             past_package = current_package
 

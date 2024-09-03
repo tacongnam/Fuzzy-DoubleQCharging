@@ -1,12 +1,12 @@
 import numpy as np
 from scipy.spatial import distance
 
-from optimizer.utils import init_function, q_max_function, reward_function, network_clustering, network_clustering_v2
+from optimizer.utils import init_function, q_max_function, reward_function, network_clustering, network_clustering_v2, FLCDS_model, get_all_path
 from simulator.node.utils import find_receiver
 from simulator.network import parameter as para
 
 class Q_learningv2:
-    def __init__(self, init_func=init_function, nb_action=80, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
+    def __init__(self, net, init_func=init_function, nb_action=80, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
         self.action_list = []
         self.nb_action = nb_action
         self.q_table = init_func(nb_action=nb_action)
@@ -21,30 +21,31 @@ class Q_learningv2:
         self.q_alpha = q_alpha
         self.q_gamma = q_gamma
 
-    def update(self, mc, network, time_stem, alpha=0.5, gamma=0.5, q_max_func=q_max_function, reward_func=reward_function):
+        self.FLCDS = FLCDS_model(network=net)
+        self.all_path = get_all_path(net=net)
+    
+    def update_all_path(self, net):
+        self.all_path = get_all_path(net=net)
+
+    def update(self, mc, network, time_stem, alpha=0.5, gamma=0.5, q_max_func=q_max_function, reward_func=reward_function, doubleq=True):
         if not len(self.list_request):
             return self.action_list[mc.state], -1.0
         
         self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
     
-        '''
-        if np.random.rand() < 0.5:
-            self.set_reward(q_table=self.q1, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
-            self.q1[mc.state] =  (1 - self.q_alpha) * self.q1[mc.state] + self.q_alpha * (
-                self.reward + self.q_gamma * self.q_max(mc, self.q2, q_max_func))
-            self.choose_next_state(mc, self.q1, network)
+        if doubleq == True:
+            if np.random.rand() < 0.5:
+                self.set_reward(q_table=self.q1, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
+                self.q1[mc.state] =  (1 - self.q_alpha) * self.q1[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q2, q_max_func))
+            else:
+                self.set_reward(q_table=self.q2, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
+                self.q2[mc.state] =  (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
+            
+            self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
         else:
-            self.set_reward(q_table=self.q2, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
-            self.q2[mc.state] =  (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (
-                self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
-            self.choose_next_state(mc, self.q2, network)
-        '''
-
-        self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (
-               self.reward + self.q_gamma * self.q_max(mc=mc, table=self.q_table, q_max_func=q_max_func))
-
-        self.choose_next_state(mc, self.q_table, network)
+            self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc=mc, table=self.q_table, q_max_func=q_max_func))
         
+        self.choose_next_state(mc, self.q_table, network)
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
         else:
