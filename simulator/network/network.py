@@ -112,6 +112,8 @@ class Network:
             print("ERROR!", nb_package)
             return dead_time, nb_dead
         
+        past_dead = nb_dead, past_package = nb_package
+
         while self.t <= max_time:
             self.t = self.t + 1
             if (self.t - 1) % 100 == 0:
@@ -152,7 +154,6 @@ class Network:
                 self.active = True
             ######################################
 
-            past_dead = self.count_dead_node()
             state = self.run_per_second(self.t, optimizer)
             current_dead = self.count_dead_node()
 
@@ -169,7 +170,7 @@ class Network:
                     self.package_lost = True
                     dead_time = self.t
 
-            if current_dead != nb_dead or current_package != nb_package:
+            if (current_dead != nb_dead and past_dead != current_dead) or (current_package != nb_package and current_package != past_package):
                 network_info = {
                     'time_stamp' : self.t,
                     'number_of_dead_nodes' : self.count_dead_node(),
@@ -190,6 +191,9 @@ class Network:
                     node_writer.writerow(network_info)
                 continue
                 
+            past_dead = current_dead
+            past_package = current_package
+
             if current_package != len(self.target):
                 break
 
