@@ -10,6 +10,9 @@ def uniform_com_func(net):
     sent_target = np.zeros(len(net.target), dtype = bool)
     
     for node in net.node:
+        if node.is_active == False:
+            continue
+
         for target in node.listTargets:
             if sent_target[target.id] == False:
                 temp_package = Package(is_energy_info=True)
@@ -33,10 +36,12 @@ def to_string(net):
 
 def count_package_function(net):
     count = 0
-
     sent_target = np.zeros(len(net.target), dtype = bool)
 
     for node in net.node:
+        if node.is_active == False:
+            continue
+        
         for target in node.listTargets:
             if sent_target[target.id] == False:
                 package = Package(is_energy_info=True)

@@ -6,7 +6,7 @@ from simulator.network import parameter as para
 
 
 class MobileCharger:
-    def __init__(self, id,  energy=None, e_move=None, start=para.depot, end=para.depot, velocity=None,
+    def __init__(self, id, energy=None, e_move=None, start=para.depot, end=para.depot, velocity=None,
                  e_self_charge=None, capacity=None, depot_state=80):
         self.id = id
         self.is_stand = False  # is true if mc stand and charge
@@ -25,7 +25,6 @@ class MobileCharger:
         self.e_move = e_move  # energy for moving
         self.e_self_charge = e_self_charge  # energy receive per second
         self.velocity = velocity  # velocity of mc
-        self.depot_state = depot_state
         self.state = depot_state # Current state in Q_table
 
     def get_status(self):
@@ -69,6 +68,7 @@ class MobileCharger:
         self.moving_time = distance.euclidean(self.start, self.end) / self.velocity
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
+
         print("[Mobile Charger] MC #{} moves to {} in {}s and charges for {}s".format(self.id, self.end, self.moving_time, charging_time))
         with open(network.mc_log_file, "a") as mc_log_file:
             writer = csv.DictWriter(mc_log_file, fieldnames=['time_stamp', 'id', 'starting_point', 'destination_point', 'decision_id', 'charging_time', 'moving_time'])
@@ -83,10 +83,11 @@ class MobileCharger:
             }
             writer.writerow(mc_info)
 
-    def run(self, network, time_stem, net=None, optimizer=None):
+    def run(self, time_stem, net=None, optimizer=None):
         # print(self.energy, self.start, self.end, self.current)
         if ((not self.is_active) and optimizer.list_request) or abs(time_stem - self.end_time) < 1:
             self.is_active = True
+            
             new_list_request = []
             for request in optimizer.list_request:
                 if net.node[request["id"]].energy < net.node[request["id"]].energy_thresh:
@@ -94,9 +95,11 @@ class MobileCharger:
                 else:
                     net.node[request["id"]].is_request = False
             optimizer.list_request = new_list_request
+            
             if not optimizer.list_request:
                 self.is_active = False
-            self.get_next_location(network=network, time_stem=time_stem, optimizer=optimizer)
+
+            self.get_next_location(network=net, time_stem=time_stem, optimizer=optimizer)
         else:
             if self.is_active:
                 if not self.is_stand:
@@ -108,6 +111,8 @@ class MobileCharger:
                 else:
                     # print("self charging")
                     self.self_charge()
+
+        # Start self-charge     
         if self.energy < para.E_mc_thresh and not self.is_self_charge and self.end != para.depot:
             self.start = self.current
             self.end = para.depot

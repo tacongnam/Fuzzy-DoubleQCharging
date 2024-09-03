@@ -3,7 +3,7 @@ from scipy.spatial import distance
 
 from optimizer.utils import init_function, q_max_function, reward_function, network_clustering, network_clustering_v2
 from simulator.node.utils import find_receiver
-
+from simulator.network import parameter as para
 
 class Q_learningv2:
     def __init__(self, init_func=init_function, nb_action=80, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
@@ -78,7 +78,7 @@ class Q_learningv2:
 
     def choose_next_state(self, mc, table, network):
         # next_state = np.argmax(self.q_table[mc.state])
-        if mc.energy < 10:
+        if mc.energy < para.E_mc_thresh:
             mc.state = len(table) - 1
             print('[Optimizer] MC #{} energy is running low ({:.2f}), and needs to rest!'.format(mc.id, mc.energy))
         else:

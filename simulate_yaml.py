@@ -1,11 +1,8 @@
 import csv
-import pandas as pd
 import random
-import pickle
 import os
 import sys
 import copy
-from ast import literal_eval
 import numpy as np
 from scipy.stats import sem, t
 from tabulate import tabulate
@@ -21,7 +18,6 @@ from optimizer.qlearning_kmeans import Q_learningv2
 from simulator.mobilecharger.mobilecharger import MobileCharger
 from simulator.network.network import Network
 from simulator.node.cluster import Cluster
-from simulator.node.node import Node
 from simulator.node.in_node import InNode
 from simulator.node.out_node import OutNode
 from simulator.node.sensor_node import SensorNode
@@ -63,6 +59,7 @@ class Simulation:
 
         list_clusters[-1] = Cluster(-1, para.base)
         target_id = 0
+
         for cluster in clusters_data:
             list_clusters[int(cluster['cluster_id'])] = Cluster(int(cluster['cluster_id']),  cluster['centroid'])
             
@@ -70,7 +67,6 @@ class Simulation:
                 new_target = Target(target_id, target, int(cluster['cluster_id']))
                 target_pos.append(new_target)
                 target_id += 1
-        
         # print(list_clusters)
         print('Build Sensors - Build targets: Done')
         list_node = []
@@ -182,7 +178,7 @@ class Simulation:
             net_log_file = "log/network_log_new_network_{}.csv".format(nb_run)
             MC_log_file = "log/MC_log_new_network_{}.csv".format(nb_run)
             experiment = "{}".format(nb_run)
-            net = Network(list_node=list_node, mc_list=mc_list, target=target_pos, package_size=self.package_size, experiment=experiment, com_range=self.com_range, list_clusters=list_clusters)
+            net = Network(list_node=list_node, mc_list=mc_list, target=target_pos, experiment=experiment, com_range=self.com_range, list_clusters=list_clusters)
 
             # self.PrintOutput(net)
             
@@ -271,4 +267,4 @@ print(r"""
 
 p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
-p.runSimulator(1, 54000)
+p.runSimulator(1, 15000)

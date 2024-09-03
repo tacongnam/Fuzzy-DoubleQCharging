@@ -12,7 +12,7 @@ from skfuzzy import control as ctrl
 from simulator.network import parameter as para
 from simulator.node.utils import find_receiver
 
-BASE = (para.base[0], para.base[1])
+BASE = -1
 
 def q_max_function(q_table, state):
     temp = [max(row) if index != state else -float("inf") for index, row in enumerate(q_table)]
@@ -39,21 +39,23 @@ def init_function(nb_action=81):
 def get_weight(net, mc, q_learning, action_id, charging_time):
     p = get_charge_per_sec(net, q_learning, action_id)
     all_path = get_all_path(net)
-    time_move = distance.euclidean(q_learning.action_list[mc.state],
-                                   q_learning.action_list[action_id]) / mc.velocity
+
+    time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
     list_dead = []
     w = [0 for _ in q_learning.list_request]
+
     for request_id, request in enumerate(q_learning.list_request):
-        temp = (net.node[request["id"]].energy - time_move * request["avg_energy"]) + (
-                p[request_id] - request["avg_energy"]) * charging_time
+        temp = (net.node[request["id"]].energy - time_move * request["avg_energy"]) + (p[request_id] - request["avg_energy"]) * charging_time
         if temp < 0:
             list_dead.append(request["id"])
+
     for request_id, request in enumerate(q_learning.list_request):
         nb_path = 0
         for path in all_path:
-            if request["id"] in path:
+            if net.node[request["id"]].id in path:
                 nb_path += 1
         w[request_id] = nb_path
+
     total_weight = sum(w) + len(w) * 10 ** -3
     w = np.asarray([(item + 10 ** -3) / total_weight for item in w])
     nb_target_alive = 0
@@ -67,7 +69,7 @@ def get_weight(net, mc, q_learning, action_id, charging_time):
 def get_path(net, sensor):
     path = [sensor.id]
     if distance.euclidean(sensor.location, para.base) <= sensor.com_ran:
-        path.append(BASE)
+        path.append(-1)
     else:
         receive = sensor.find_receiver(net=net)
         if receive.id != -1:
@@ -102,9 +104,11 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     E_min_crisp = network.node[network.find_min_node()].energy
     max_energy = network.node[0].energy_max
     L_r_crisp = len(q_learning.list_request)
-    E_min = ctrl.Antecedent(np.linspace(0, 0.3, num = 1001), 'E_min')
+    
+    E_min = ctrl.Antecedent(np.linspace(0, max_energy, num = 1001), 'E_min')
     L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
     Theta = ctrl.Consequent(np.linspace(0, 1, num = 101), 'Theta')
+
     L_r['L'] = fuzz.trapmf(L_r.universe, [0, 0, 2, 6])
     L_r['M'] = fuzz.trimf(L_r.universe, [2, 6, 10])
     L_r['H'] = fuzz.trapmf(L_r.universe, [6, 10, len(network.node), len(network.node)])

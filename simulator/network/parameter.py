@@ -9,4 +9,4 @@ EMP = 1.3e-12
 ER = 0.0001
 ET = 5.0e-05
 prob = 1.0
-E_mc_thresh = 1000
+E_mc_thresh = 3000

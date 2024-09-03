@@ -6,15 +6,14 @@ from simulator.network.utils import uniform_com_func, to_string, count_package_f
 
 
 class Network:
-    def __init__(self, list_node=None, mc_list=None, target=None, package_size=400, experiment=None, com_range=0, list_clusters=None):
+    def __init__(self, list_node=None, mc_list=None, target=None, experiment=None, com_range=0, list_clusters=None):
         self.node = list_node
-        self.set_neighbor()
-        self.set_level()
+        self.base_range = []
+        self.reset_neighbor()
 
         self.mc_list = mc_list
         self.target = target
         self.charging_pos = []
-        self.package_size = package_size
 
         self.listClusters = list_clusters
 
@@ -29,25 +28,32 @@ class Network:
 
         self.t = 0
         
-        for n in self.node:
-            for t in self.target:
+        for t in self.target:
+            for n in self.node:
                 if distance.euclidean(n.location, t.location) <= n.sen_ran:
                     n.listTargets.append(t)
-
-    def set_neighbor(self):
+    
+    def reset_neighbor(self):
+        # Reset neighbor list
         for node in self.node:
-            node.probe_neighbors(self)
-
-    def set_level(self):
+            if node.is_active == True:
+                node.probe_neighbors(self)
+        
+        # Reset level list
         for node in self.node:
             node.level = -1
         tmp1 = []
         tmp2 = []
 
-        for node in self.node: 
-            if distance.euclidean(node.location, para.base) < node.com_ran and node.is_active == True:
-                node.level = 1
-                tmp1.append(node)        
+        if len(self.base_range) == 0:
+            for node in self.node: 
+                if distance.euclidean(node.location, para.base) < node.com_ran and node.is_active == True:
+                    node.level = 1
+                    tmp1.append(node)
+            self.base_range = tmp1
+        else:
+            tmp1 = self.base_range
+
         while True:
             if len(tmp1) == 0:
                 break
@@ -60,6 +66,7 @@ class Network:
             tmp1 = tmp2[:]
             tmp2.clear()        
         return
+    
 
     def communicate(self, func=uniform_com_func):
         return func(self)
@@ -69,10 +76,11 @@ class Network:
         self.request_id = []
         for index, node in enumerate(self.node):
             if node.energy < node.energy_thresh:
-                node.request(index=index, optimizer=optimizer, t=t)
+                node.request(index=index, optimizer=optimizer, t=t) # index of sensor, not sensor id
                 self.request_id.append(index)
             else:
                 node.is_request = False
+
         if self.request_id:
             for index, node in enumerate(self.node):
                 if index not in self.request_id and (t - node.check_point[-1]["time"]) > 50:
@@ -80,15 +88,14 @@ class Network:
             
         if optimizer and self.active:
             for mc in self.mc_list:
-                # if mc.id*300 < t:
-                #     mc.run(network=self, time_stem=t, net=self, optimizer=optimizer)
-                mc.run(network=self, time_stem=t, net=self, optimizer=optimizer)
+                mc.run(time_stem=t, net=self, optimizer=optimizer)
         return state
 
     def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
         print('Simulating...')
         nb_dead = self.count_dead_node()
         nb_package = self.count_package()
+
         dead_time = dead_time
 
         if t == 0:
@@ -101,8 +108,9 @@ class Network:
                 writer.writeheader()
         
         self.t = t
-        if self.count_package()!=len(self.target):
-            return 
+        if nb_package != len(self.target):
+            print("ERROR!", nb_package)
+            return dead_time, nb_dead
         
         while self.t <= max_time:
             self.t = self.t + 1
@@ -149,8 +157,7 @@ class Network:
             current_dead = self.count_dead_node()
 
             if past_dead != current_dead:
-                self.set_neighbor()
-                self.set_level()
+                self.reset_neighbor()
             
             current_package = self.count_package()
 
@@ -182,7 +189,9 @@ class Network:
                     node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
                 continue
-
+                
+            if current_package != len(self.target):
+                break
 
         print('\n[Network]: Finished with {} dead sensors, {} packages at {}s!'.format(self.count_dead_node(), self.count_package(), dead_time))
         return dead_time, nb_dead
@@ -211,8 +220,6 @@ class Network:
         return count
 
     def count_package(self, count_func=count_package_function):
-        self.set_neighbor()
-        self.set_level()
         count = count_func(self)
         return count
 
