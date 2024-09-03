@@ -112,7 +112,8 @@ class Network:
             print("ERROR!", nb_package)
             return dead_time, nb_dead
         
-        past_dead = nb_dead, past_package = nb_package
+        past_dead = nb_dead
+        past_package = nb_package
 
         while self.t <= max_time:
             self.t = self.t + 1
