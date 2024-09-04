@@ -52,9 +52,9 @@ class Simulation:
         self.energy_thresh = 0.4 * self.energy #net_argc['node_phy_spe']['threshold']  
 
         self.double_q = False
-        dq = input("Double Q Learning or not? Y / N: ")
-        if dq == "Y":
-            self.double_q = True
+        #dq = input("Double Q Learning or not? Y / N: ")
+        #if dq == "Y":
+        self.double_q = True
 
     def buildSensor(self):
         # Build target
