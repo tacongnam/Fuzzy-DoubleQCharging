@@ -121,7 +121,20 @@ class Network:
         while self.t <= max_time:
             self.t = self.t + 1
             if (self.t - 1) % 200 == 0:
-                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(self.t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
+                mi = self.find_min_node()
+
+                avg = 0
+                cha = 0
+
+                for node in self.node:
+                    avg = avg + node.actual_used #/ self.t
+                    cha = cha + node.charged #/ self.t
+                avg = avg / len(self.node)
+                cha = cha / len(self.node)
+
+                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, average used: {:.4f}, average charged: {:.4f} at {}".format(self.t, self.node[mi].energy, self.node[mi].actual_used / self.t, self.node[mi].charged / self.t, self.node[mi].location))
+                print('\t\tSum used of all nodes: {:.6f}, average (time): {:.6f}'.format(avg, avg / self.t))
+                print('\t\tSum charged of all nodes: {:.6f}, average (time): {:.6f}'.format(cha, cha / self.t))
                 print('\t\tNumber of dead nodes: {}'.format(past_dead))
                 print('\t\tNumber of packages: {}'.format(past_package))
                 
@@ -129,8 +142,8 @@ class Network:
                     'time_stamp' : self.t,
                     'number_of_dead_nodes' : past_dead,
                     'number_of_monitored_target' : past_package,
-                    'lowest_node_energy': round(self.node[self.find_min_node()].energy, 3),
-                    'lowest_node_location': self.node[self.find_min_node()].location,
+                    'lowest_node_energy': round(self.node[mi].energy, 3),
+                    'lowest_node_location': self.node[mi].location,
                     'theta': optimizer.alpha,     
                     'avg_energy': self.get_average_energy(),
                     'MC_0_status' : self.mc_list[0].get_status(),

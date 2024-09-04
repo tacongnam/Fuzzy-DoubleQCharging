@@ -54,7 +54,7 @@ class Simulation:
         self.double_q = False
         #dq = input("Double Q Learning or not? Y / N: ")
         #if dq == "Y":
-        self.double_q = True
+        self.double_q = False
 
     def buildSensor(self):
         # Build target
