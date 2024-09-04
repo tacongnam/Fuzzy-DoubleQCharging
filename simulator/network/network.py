@@ -144,7 +144,7 @@ class Network:
                     node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
                 for mc in self.mc_list:
-                    print("\t\tMC #{} is {} at {}".format(mc.id, mc.get_status(), mc.current))
+                    print("\t\tMC #{} is {} at {} with energy {}".format(mc.id, mc.get_status(), mc.current, mc.energy))
 
                 # for node in self.node:
                 #    print("\tNode", node.id, node.energy)
