@@ -120,7 +120,7 @@ class Network:
 
         while self.t <= max_time:
             self.t = self.t + 1
-            if (self.t - 1) % 50 == 0:
+            if (self.t - 1) % 200 == 0:
                 print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f} at {}".format(self.t, self.node[self.find_min_node()].energy, self.node[self.find_min_node()].actual_used, self.node[self.find_min_node()].location))
                 print('\t\tNumber of dead nodes: {}'.format(past_dead))
                 print('\t\tNumber of packages: {}'.format(past_package))
