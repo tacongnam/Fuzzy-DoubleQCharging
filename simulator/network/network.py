@@ -102,7 +102,7 @@ class Network:
 
         if t == 0:
             with open(self.net_log_file, "w") as information_log:
-                writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
+                writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'sum_all', 'average_all_per_second', 'charged_all', 'average_charged_all_per_second', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                 writer.writeheader()
             
             with open(self.mc_log_file, "w") as mc_log:
@@ -146,6 +146,10 @@ class Network:
                     'lowest_node_location': self.node[mi].location,
                     'theta': optimizer.alpha,     
                     'avg_energy': self.get_average_energy(),
+                    'sum_all': avg,
+                    'average_all_per_second': avg / self.t,
+                    'charged_all': avg,
+                    'average_charged_all_per_second': avg / self.t,
                     'MC_0_status' : self.mc_list[0].get_status(),
                     'MC_1_status' : self.mc_list[1].get_status(),
                     'MC_2_status' : self.mc_list[2].get_status(),
@@ -154,7 +158,7 @@ class Network:
                     'MC_2_location' : self.mc_list[2].current,
                 }
                 with open(self.net_log_file, 'a') as information_log:
-                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
+                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'sum_all', 'average_all_per_second', 'charged_all', 'average_charged_all_per_second', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
                 for mc in self.mc_list:
                     print("\t\tMC #{} is {} at {} with energy {}".format(mc.id, mc.get_status(), mc.current, mc.energy))
@@ -191,6 +195,15 @@ class Network:
                     dead_time = self.t
 
             if (current_dead != nb_dead and past_dead != current_dead) or (current_package != nb_package and current_package != past_package):
+                avg = 0
+                cha = 0
+
+                for node in self.node:
+                    avg = avg + node.actual_used #/ self.t
+                    cha = cha + node.charged #/ self.t
+                avg = avg / len(self.node)
+                cha = cha / len(self.node)
+
                 network_info = {
                     'time_stamp' : self.t,
                     'number_of_dead_nodes' : current_dead,
@@ -199,6 +212,10 @@ class Network:
                     'lowest_node_location': self.node[self.find_min_node()].location,
                     'theta': optimizer.alpha,
                     'avg_energy': self.get_average_energy(),
+                    'sum_all': avg,
+                    'average_all_per_second': avg / self.t,
+                    'charged_all': avg,
+                    'average_charged_all_per_second': avg / self.t,
                     'MC_0_status' : self.mc_list[0].get_status(),
                     'MC_1_status' : self.mc_list[1].get_status(),
                     'MC_2_status' : self.mc_list[2].get_status(),
@@ -207,7 +224,7 @@ class Network:
                     'MC_2_location' : self.mc_list[2].current,
                 }
                 with open(self.net_log_file, 'a') as information_log:
-                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
+                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'sum_all', 'average_all_per_second', 'charged_all', 'average_charged_all_per_second', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
             
             past_dead = current_dead
