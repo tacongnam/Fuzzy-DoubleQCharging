@@ -17,11 +17,15 @@ class OutNode(Node):
         if not self.is_active:
             return Node(id = -1)
         
-        distance_min = 10000007
+        if self.candidate is not None and self.candidate.is_active == True:
+            return self.candidate
+        
+        distance_min = 10000007.0
         node_min = Node(id = -1)
         for node in self.neighbor:
             if node.is_active == True and (node.type_node == Node_Type.RELAY_NODE and node.send_cluster_id.id == self.cluster_id): 
                 if distance.euclidean(node.location, self.location) < distance_min:
+                    self.candidate = node
                     node_min = node
                     distance_min = distance.euclidean(node.location, self.location)
         

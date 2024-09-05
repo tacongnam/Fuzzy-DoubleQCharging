@@ -7,21 +7,18 @@ from simulator.network.package import Package
 from simulator.node.const import Node_Type
 
 def uniform_com_func(net):
-    sent_target = np.zeros(len(net.target), dtype = bool)
-    
-    for node in net.node:
-        if node.is_active == False:
-            continue
+    for target in net.target:
+        for node in target.listSensors:
+            if node[0].is_active == False:
+                continue
+            #temp_package = Package(is_energy_info=True)
+            #node[0].send(net, temp_package, receiver=node[0].find_receiver(net))
 
-        for target in node.listTargets:
-            if sent_target[target.id] == False:
-                temp_package = Package(is_energy_info=True)
-                node.send(net, temp_package, receiver=node.find_receiver(net))
-
-                if temp_package.path[-1] == -1:
-                    package = Package(is_energy_info=False)
-                    node.send(net, package, receiver=node.find_receiver(net))
-                    sent_target[target.id] = True
+            #if temp_package.path[-1] == -1:
+            package = Package(is_energy_info=False)
+            node[0].send(net, package, receiver=node[0].find_receiver(net))
+            #print("Sent success target {} from node {}, path {}".format(target.location, node[0].id, package.path))
+            break
     return True
 
 
@@ -36,20 +33,18 @@ def to_string(net):
 
 def count_package_function(net):
     count = 0
-    sent_target = np.zeros(len(net.target), dtype = bool)
+    for target in net.target:
+        for node in target.listSensors:
+            if node[0].is_active == False:
+                continue
 
-    for node in net.node:
-        if node.is_active == False:
-            continue
-        
-        for target in node.listTargets:
-            if sent_target[target.id] == False:
-                package = Package(is_energy_info=True)
-                node.send(net, package, receiver=node.find_receiver(net))
+            temp_package = Package(is_energy_info=True)
+            node[0].send(net, temp_package, receiver=node[0].find_receiver(net))
 
-                if package.path[-1] == -1:
-                    sent_target[target.id] = True
-                    count += 1
+            if temp_package.path[-1] == -1:
+                count += 1
+                break
+
     return count
 
 def set_checkpoint(t=0, network=None, optimizer=None, dead_time=0):

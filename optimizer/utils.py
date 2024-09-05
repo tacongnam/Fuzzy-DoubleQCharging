@@ -84,7 +84,7 @@ def get_all_path(net):
     for target in net.target:
         new_path = []
         for node in net.node:
-            if distance.euclidean(target.location, node.location) <= node.sen_ran:
+            if distance.euclidean(target.location, node.location) < node.sen_ran:
                 new_path = get_path(net, node)
                 if BASE in new_path:
                     break

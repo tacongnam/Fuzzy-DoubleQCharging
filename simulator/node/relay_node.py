@@ -25,9 +25,12 @@ class RelayNode(Node):
         """
         if not self.is_active:
             return Node(id = -1)
+        
+        if self.candidate is not None and self.candidate.is_active == True:
+            return self.candidate
     
         for node in self.neighbor:
-            distance_min = 10000007
+            distance_min = 10000007.0
             node_min = Node(id = -1)
             
             if node.is_active == True and (node.type_node == Node_Type.RELAY_NODE and self.send_cluster_id.id == node.send_cluster_id.id 
@@ -43,6 +46,7 @@ class RelayNode(Node):
                 
                 if distance_1 < distance_2 and distance.euclidean(node.location, self.location) < distance_min:
                     node_min = node
+                    self.candidate = node
                     distance_min = distance.euclidean(node.location, self.location)
 
                 if node_min.id != -1:
@@ -51,6 +55,7 @@ class RelayNode(Node):
         for node in self.neighbor:
             if  node.is_active == True and node.type_node == Node_Type.IN_NODE and node.cluster_id == self.receive_cluster_id.id:
             # if(node.__class__.__name__ == "InNode") and self.level > node.level:
+                self.candidate = node
                 return node
 
         return Node(id = -1)

@@ -1,7 +1,7 @@
 Clusters:
 - centroid:
-  - 500.0
-  - 500.0
+  - 500
+  - 500
   cluster_id: 0
   list_targets:
   - - 161
@@ -4011,8 +4011,8 @@ RelayNode: []
 SensorNode: []
 node_phy_spe:
   capacity: 10
-  com_range: 80.1
+  com_range: 80.0
   package_size: 400.0
   prob_gp: 1
-  sen_range: 40.1
+  sen_range: 40.0
 nodes: []

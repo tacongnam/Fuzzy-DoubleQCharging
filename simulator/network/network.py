@@ -32,8 +32,11 @@ class Network:
         
         for t in self.target:
             for n in self.node:
-                if distance.euclidean(n.location, t.location) <= n.sen_ran:
+                if distance.euclidean(n.location, t.location) < n.sen_ran:
                     n.listTargets.append(t)
+                    t.listSensors.append((n, distance.euclidean(n.location, t.location)))
+            
+            t.listSensors = sorted(t.listSensors, key=lambda x: x[1])
     
     def reset_neighbor(self):
         # Reset neighbor list
@@ -48,8 +51,8 @@ class Network:
         tmp2 = []
 
         if len(self.base_range) == 0:
-            for node in self.node: 
-                if distance.euclidean(node.location, para.base) < node.com_ran and node.is_active == True:
+            for node in self.node:
+                if distance.euclidean(node.location, para.base) <= node.com_ran and node.is_active == True:
                     node.level = 1
                     tmp1.append(node)
             self.base_range = tmp1
@@ -63,8 +66,8 @@ class Network:
             for node in tmp1:
                 for neighbor in node.potentialSender:
                     if neighbor.is_active == True and neighbor.level == -1:
-                        tmp2.append(neighbor)
                         neighbor.level = node.level + 1
+                        tmp2.append(neighbor)
             tmp1 = tmp2[:]
             tmp2.clear()        
         return
@@ -118,26 +121,41 @@ class Network:
         past_package = nb_package
         update_path = True
 
+        #for node in self.node:
+        #    print("Node", node.id, node.location, "receiver", node.find_receiver(net=self).id, node.find_receiver(net=self).location)
+        #for node in self.node[38].neighbor:
+        #    print(node.id, node.location)
+        #for node in self.node:
+        #    print(node.id, node.level)
+        #print(distance.euclidean(self.node[97].location, self.node[122].location) <= self.com_range)
+
         while self.t <= max_time:
             self.t = self.t + 1
-            if (self.t - 1) % 50 == 0:
+            if (self.t - 1) % 100 == 0:
                 mi = self.find_min_node()
 
                 avg = 0
                 cha = 0
+                pac = 0
 
                 for node in self.node:
                     avg = avg + node.actual_used #/ self.t
+                    pac = pac + node.sent_through
                     if node.charged_count > 0:
                         cha = cha + node.charged / node.charged_count #/ self.t
                 avg = avg / len(self.node)
                 cha = cha / len(self.node)
+                pac = pac / len(self.node)
 
-                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, average used: {:.4f}, average charged: {:.4f} at {}".format(self.t, self.node[mi].energy, self.node[mi].actual_used / self.t, self.node[mi].charged / self.t, self.node[mi].location))
+                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, average used: {:.4f}, average charged: {:.4f}, packages sent: {} at {}".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].sent_through, self.node[mi].location))
                 print('\t\tSum used of all nodes: {:.6f}, average (time): {:.6f}'.format(avg, avg / self.t))
                 print('\t\tSum charged of all nodes: {:.6f}, average (time): {:.6f}'.format(cha, cha / self.t))
                 print('\t\tNumber of dead nodes: {}'.format(past_dead))
                 print('\t\tNumber of packages: {}'.format(past_package))
+                print('\t\tAverage of packages sent: {}'.format(pac))
+
+                #for node in self.node:
+                #    print(node.id, node.location, node.sent_through)
                 
                 network_info = {
                     'time_stamp' : self.t,
@@ -184,6 +202,9 @@ class Network:
                 update_path = True
             else:
                 update_path = False
+
+            #for node in self.node:
+            #    print(node.id, node.location, node.sent_through)
             
             current_package = self.count_package()
 

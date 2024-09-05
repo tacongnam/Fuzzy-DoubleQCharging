@@ -34,9 +34,10 @@ class Node:
         self.listTargets = [] # danh sách các targets trong phạm vi có thể theo dõi, không tính tới việc sẽ theo dõi các targets này hay không
 
         self.sent_through = 0
-        self.dist_sent = 0
         self.charged = 0
         self.charged_count = 0
+
+        self.candidate = None
 
     def set_average_energy(self, func=estimate_average_energy):
         """
@@ -76,19 +77,19 @@ class Node:
         else:
             return 0
 
-    def send(self, net=None, package=None, receiver=0, is_energy_info=False):
+    def send(self, net=None, package=None, receiver=None):
         """
         send package
         :param package:
         :param net: the network
-        :param receiver: the function calculate receiver node
-        :param is_energy_info: if this package is energy package, is_energy_info will be true
+        :param receiver: the receiver node
         :return: send package to the next node and reduce energy of this node
         """
         d0 = math.sqrt(para.EFS / para.EMP)
         package.update_path(self.id)
         dist = distance.euclidean(self.location, para.base)
-        if distance.euclidean(self.location, para.base) > self.com_ran:
+
+        if dist > self.com_ran:
             receiver_id = receiver.id
             if receiver_id != -1:
                 d = distance.euclidean(self.location, receiver.location)
@@ -96,20 +97,21 @@ class Node:
                 self.energy -= e_send * package.size
                 self.used_energy += e_send * package.size
                 self.actual_used += e_send * package.size
-                self.sent_through += 1
-                self.dist_sent += d
+                if package.size > 0:
+                    self.sent_through += 1
                 receiver.receive(package)
-                receiver.send(net, package, receiver=receiver.find_receiver(net=net), is_energy_info=is_energy_info)
-        else:
+                receiver.send(net, package, receiver=receiver.find_receiver(net=net))
+        else:        
             package.is_success = True
-            d = distance.euclidean(self.location, para.base)
+            d = dist
             e_send = para.ET + para.EFS * d ** 2 if d <= d0 else para.ET + para.EMP * d ** 4
-            self.dist_sent += d
             self.energy -= e_send * package.size
             self.used_energy += e_send * package.size
             self.actual_used += e_send * package.size
-            self.sent_through += 1
+            if package.size > 0:
+                self.sent_through += 1
             package.update_path(-1)
+
         self.check_active(net)
 
     def receive(self, package):

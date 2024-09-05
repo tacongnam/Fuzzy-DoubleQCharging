@@ -6,7 +6,7 @@ from simulator.node.const import Node_Type
 from simulator.node.node import Node
 from simulator.network import parameter as para
 
-class ConnectorNode(Node):  
+class ConnectorNode(Node):
     def find_receiver(self, net):
         """
         find receiver node
@@ -16,8 +16,11 @@ class ConnectorNode(Node):
         """
         if not self.is_active:
             return Node(id = -1)
+
+        #if self.candidate is not None and self.candidate.is_active == True:
+        #    return self.candidate
         
-        distance_min = 10000007
+        distance_min = 10000007.0
         node_min = Node(id = -1)
             
         for node in self.neighbor:
@@ -27,8 +30,9 @@ class ConnectorNode(Node):
             # với connector node thì cần phải xét level nếu không sẽ gửi lộn
 
                 if distance.euclidean(node.location, net.listClusters[self.cluster_id].centroid) < distance_min:
+                    self.candidate = node
                     node_min = node
-                    distance_min = distance.euclidean(node.location, self.location)
+                    distance_min = distance.euclidean(node.location, net.listClusters[self.cluster_id].centroid)
         
         return node_min
     
@@ -37,7 +41,7 @@ class ConnectorNode(Node):
         self.potentialSender.clear()
 
         for node in network.node:
-            if node.is_active == True and self != node and distance.euclidean(node.location, self.location) <= self.com_ran:
+            if node.is_active == True and self.id != node.id and distance.euclidean(node.location, self.location) <= self.com_ran:
                 self.neighbor.append(node)
                 if(node.type_node in [Node_Type.SENSOR_NODE, Node_Type.CONNECTOR_NODE] and self.cluster_id == node.cluster_id):
                     self.potentialSender.append(node)
