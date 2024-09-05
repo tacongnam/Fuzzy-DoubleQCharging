@@ -120,7 +120,7 @@ class Network:
 
         while self.t <= max_time:
             self.t = self.t + 1
-            if (self.t - 1) % 200 == 0:
+            if (self.t - 1) % 50 == 0:
                 mi = self.find_min_node()
 
                 avg = 0
@@ -128,7 +128,8 @@ class Network:
 
                 for node in self.node:
                     avg = avg + node.actual_used #/ self.t
-                    cha = cha + node.charged #/ self.t
+                    if node.charged_count > 0:
+                        cha = cha + node.charged / node.charged_count #/ self.t
                 avg = avg / len(self.node)
                 cha = cha / len(self.node)
 
@@ -200,7 +201,8 @@ class Network:
 
                 for node in self.node:
                     avg = avg + node.actual_used #/ self.t
-                    cha = cha + node.charged #/ self.t
+                    if node.charged_count > 0:
+                        cha = cha + node.charged / node.charged_count #/ self.t
                 avg = avg / len(self.node)
                 cha = cha / len(self.node)
 

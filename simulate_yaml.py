@@ -272,6 +272,6 @@ print(r"""
     
     """)
 
-p = Simulation('data/hanoi1000n50_new.yaml')
+p = Simulation('data/test_750.yaml')
 p.makeNetwork()
 p.runSimulator(1, 50)

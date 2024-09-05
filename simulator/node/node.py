@@ -36,6 +36,7 @@ class Node:
         self.sent_through = 0
         self.dist_sent = 0
         self.charged = 0
+        self.charged_count = 0
 
     def set_average_energy(self, func=estimate_average_energy):
         """
@@ -70,6 +71,7 @@ class Node:
             p_actual = min(self.energy_max - self.energy, p_theory)
             self.energy = self.energy + p_actual
             self.charged += p_actual
+            self.charged_count += 1
             return p_actual
         else:
             return 0
