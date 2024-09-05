@@ -167,8 +167,8 @@ class Network:
                 # for node in self.node:
                 #    print("\tNode", node.id, node.energy)
 
-            if (self.t-1) % 500 == 0 and self.t > 1:
-                set_checkpoint(t=self.t, network=self, optimizer=optimizer, dead_time=dead_time)
+            # if (self.t-1) % 500 == 0 and self.t > 1:
+            #    set_checkpoint(t=self.t, network=self, optimizer=optimizer, dead_time=dead_time)
 
             ######################################
             if self.t == 200:
