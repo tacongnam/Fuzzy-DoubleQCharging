@@ -96,7 +96,7 @@ class Network:
                 mc.run(time_stem=t, net=self, optimizer=optimizer, update_path=update_path)
         return state
 
-    def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
+    def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=500000):
         print('Simulating...')
         nb_dead = self.count_dead_node()
         nb_package = self.count_package()
@@ -144,9 +144,10 @@ class Network:
                 avg = avg / len(self.node)
                 cha = cha / len(self.node)
 
-                print("\n[Network] Simulating time: {}s, lowest energy node: {:.6f}, used: {:.6f}, charged: {:.6f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
-                print("\t\tPrevious lowest node: id = {}, energy = {:.6f}, charge = {:.6f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))
+                print("\n[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f}, charged: {:.4f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
+                print("\t\tPrevious lowest node: id = {}, energy = {:.4f}, charge = {:.4f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))
                 print('\t\tAverage used of each nodes: {:.6f}, average each node per second: {:.6f}'.format(avg, avg / self.t))
+                print('\t\tAverage charged of each nodes: {:.6f}'.format(cha))
                 print('\t\tNumber of dead nodes: {}'.format(past_dead))
                 print('\t\tNumber of packages: {}'.format(past_package))
                 print('\t\t-----------------------\n')
@@ -258,7 +259,7 @@ class Network:
         print('\n[Network]: Finished with {} dead sensors, {} packages at {}s!'.format(self.count_dead_node(), self.count_package(), dead_time))
         return dead_time, nb_dead
 
-    def simulate(self, optimizer=None, t=0, dead_time=0, max_time=2000000):
+    def simulate(self, optimizer=None, t=0, dead_time=0, max_time=500000):
         life_time = self.simulate_max_time(optimizer=optimizer, t=t, dead_time=dead_time, max_time=max_time)
         return life_time
 

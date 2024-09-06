@@ -4013,6 +4013,6 @@ node_phy_spe:
   capacity: 10
   com_range: 80.0
   package_size: 400.0
-  prob_gp: 1
+  prob_gp: 0.7
   sen_range: 40.0
 nodes: []

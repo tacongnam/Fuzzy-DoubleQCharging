@@ -273,4 +273,5 @@ print(r"""
 
 p = Simulation('data/test_750.yaml')
 p.makeNetwork()
-p.runSimulator(1, 50)
+for nb_run in range(5):
+    p.runSimulator(1, 500)
