@@ -79,7 +79,11 @@ class MobileCharger:
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
 
-        print("[Mobile Charger] MC #{} moves to {} in {}s and charges for {}s".format(self.id, self.end, self.moving_time, charging_time))
+        if self.end != [0.0, 0.0]:
+            print("[Mobile Charger] MC #{} moves to {} in {}s and charges for {}s".format(self.id, self.end, self.moving_time, charging_time))
+        else:
+            print("[Mobile Charger] MC #{} is self-charge for {}s".format(self.id, self.moving_time + charging_time))
+
         with open(network.mc_log_file, "a") as mc_log_file:
             writer = csv.DictWriter(mc_log_file, fieldnames=['time_stamp', 'id', 'starting_point', 'destination_point', 'decision_id', 'charging_time', 'moving_time'])
             mc_info = {
@@ -108,7 +112,7 @@ class MobileCharger:
             
             if not optimizer.list_request:
                 self.is_active = False
-
+                
             self.get_next_location(network=net, time_stem=time_stem, optimizer=optimizer, update_path=update_path)
         else:
             if self.is_active:

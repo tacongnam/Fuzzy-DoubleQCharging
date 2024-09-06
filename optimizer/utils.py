@@ -15,7 +15,7 @@ from simulator.node.utils import find_receiver
 BASE = -1
 
 def q_max_function(q_table, state):
-    temp = [max(row) if index != state else -float("inf") for index, row in enumerate(q_table)]
+    temp = [max(row) for index, row in enumerate(q_table)]
     return np.asarray(temp)
 
 
@@ -30,7 +30,6 @@ def reward_function(network, mc, q_learning, state, time_stem):
     second = nb_target_alive / len(network.target)
     third = np.sum(w * p_hat)
     first = np.sum(e * p / E)
-
     return first, second, third, charging_time
 
 def init_function(nb_action=81):
@@ -38,9 +37,7 @@ def init_function(nb_action=81):
 
 def get_weight(net, mc, q_learning, action_id, charging_time):
     p = get_charge_per_sec(net, q_learning, action_id)
-    
     all_path = q_learning.all_path
-
     time_move = distance.euclidean(q_learning.action_list[mc.state], q_learning.action_list[action_id]) / mc.velocity
     list_dead = []
     w = [0 for _ in q_learning.list_request]
@@ -48,7 +45,7 @@ def get_weight(net, mc, q_learning, action_id, charging_time):
     for request_id, request in enumerate(q_learning.list_request):
         temp = (net.node[request["id"]].energy - time_move * request["avg_energy"]) + (p[request_id] - request["avg_energy"]) * charging_time
         if temp < 0:
-            list_dead.append(request["id"])
+            list_dead.append(net.node[request["id"]].id)
 
     for request_id, request in enumerate(q_learning.list_request):
         nb_path = 0

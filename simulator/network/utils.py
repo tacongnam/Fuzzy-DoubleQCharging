@@ -8,8 +8,8 @@ from simulator.node.const import Node_Type
 
 def uniform_com_func(net):
     for target in net.target:
-        # Xac xuat truyen goi tin = 0.5
-        if random.random() < 0.5:
+        # Xac xuat truyen goi tin moi giay = 1
+        if random.random() < 1:
             continue
         for node in target.listSensors:
             if node[0].is_active == False:

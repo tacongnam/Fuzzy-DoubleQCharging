@@ -121,8 +121,16 @@ class Network:
         past_package = nb_package
         update_path = True
 
+        last_mi = 0
+
         while self.t <= max_time:
             self.t = self.t + 1
+
+            #time_skip = 100
+            #for mc in self.mc_list:
+            #    if mc.get_status() == "charging":
+            #        time_skip = 1
+
             if (self.t - 1) % 100 == 0:
                 mi = self.find_min_node()
 
@@ -136,11 +144,14 @@ class Network:
                 avg = avg / len(self.node)
                 cha = cha / len(self.node)
 
-                print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, average used: {:.4f}, average charged: {:.4f}, packages sent: {} at {}".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].sent_through, self.node[mi].location))
-                print('\t\tAverage used of all nodes: {:.6f}, average (time): {:.6f}'.format(avg, avg / self.t))
-                print('\t\tAverage charged of all nodes: {:.6f}, average (time): {:.6f}'.format(cha, cha / self.t))
+                print("\n[Network] Simulating time: {}s, lowest energy node: {:.6f}, used: {:.6f}, charged: {:.6f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
+                print("\t\tPrevious lowest node: id = {}, energy = {:.6f}, charge = {:.6f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))
+                print('\t\tAverage used of each nodes: {:.6f}, average each node per second: {:.6f}'.format(avg, avg / self.t))
                 print('\t\tNumber of dead nodes: {}'.format(past_dead))
                 print('\t\tNumber of packages: {}'.format(past_package))
+                print('\t\t-----------------------\n')
+
+                last_mi = mi
 
                 #for node in self.node:
                 #    print(node.id, node.location, node.sent_through)

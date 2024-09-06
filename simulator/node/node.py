@@ -71,6 +71,7 @@ class Node:
             d = distance.euclidean(self.location, mc.current)
             p_theory = para.alpha / (d + para.beta) ** 2
             p_actual = min(self.energy_max - self.energy, p_theory)
+            # print("p_actual", self.id, self.energy_max - self.energy, p_theory, p_actual, mc.id)
             self.energy = self.energy + p_actual
             self.charged += p_actual
             self.charged_count += 1
