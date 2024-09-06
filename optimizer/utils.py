@@ -202,6 +202,7 @@ def network_clustering(optimizer, network=None, nb_cluster=81):
     Y = np.array(Y)
     # print(Y)
     d = np.linalg.norm(Y)
+    # print(Y, d)
     Y = Y/d
     kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X, sample_weight=Y)
     charging_pos = []
