@@ -55,6 +55,7 @@ class Node:
         """
         if len(self.check_point) >= self.len_cp:
             self.check_point.pop(0)
+            
         self.check_point.append(
             {"E_current": self.energy, "time": t, "avg_e": self.used_energy / (t - self.check_point[-1]["time"])})
         self.avg_energy = self.check_point[-1]["avg_e"]

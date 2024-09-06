@@ -83,11 +83,10 @@ def get_all_path(net):
 
     for target in net.target:
         new_path = []
-        for node in net.node:
-            if distance.euclidean(target.location, node.location) < node.sen_ran:
-                new_path = get_path(net, node)
-                if BASE in new_path:
-                    break
+        for node in target.listSensors:
+            new_path = get_path(net, node[0])
+            if BASE in new_path:
+                break
         list_path.append(new_path)
 
     return list_path
@@ -149,12 +148,13 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     FLCDS.compute()
     alpha = FLCDS.output['Theta']
     q_learning.alpha = alpha
+
     # energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
     energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
-    # print(energy_min)
+
     s1 = []  # list of node in request list which has positive charge
     s2 = []  # list of node not in request list which has negative charge
-    for index, node in enumerate(network.node):
+    for node in network.node:
         d = distance.euclidean(q_learning.action_list[state], node.location)
         p = para.alpha / (d + para.beta) ** 2
         p1 = 0
@@ -165,29 +165,27 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
             elif other_mc.id != mc.id and other_mc.get_status() == "moving" and other_mc.state != len(q_learning.q_table) - 1:
                 d = distance.euclidean(other_mc.end, node.location)
                 p1 += (para.alpha / (d + para.beta) ** 2)*(other_mc.end_time - other_mc.arrival_time)
+        
         if node.energy - time_move * node.avg_energy + p1 < energy_min and p - node.avg_energy > 0:
-            s1.append((index, p, p1))
+            s1.append((node, p, p1))
         if node.energy - time_move * node.avg_energy + p1 > energy_min and p - node.avg_energy < 0:
-            s2.append((index, p, p1))
+            s2.append((node, p, p1))
+    
     t = []
-
-    for index, p, p1 in s1:
-        t.append((energy_min - network.node[index].energy + time_move * network.node[index].avg_energy - p1) / (
-                p - network.node[index].avg_energy))
-    for index, p, p1 in s2:
-        t.append((energy_min - network.node[index].energy + time_move * network.node[index].avg_energy - p1) / (
-                p - network.node[index].avg_energy))
-    dead_list = []
+    for node, p, p1 in s1:
+        t.append((energy_min - node.energy + time_move * node.avg_energy - p1) / (p - node.avg_energy))
+    for node, p, p1 in s2:
+        t.append((energy_min - node.energy + time_move * node.avg_energy - p1) / (p - node.avg_energy))
+    
+    dead_list = [] 
     for item in t:
         nb_dead = 0
-        for index, p, p1 in s1:
-            temp = network.node[index].energy - time_move * network.node[index].avg_energy + p1 + (
-                        p - network.node[index].avg_energy) * item
+        for node, p, p1 in s1:
+            temp = node.energy - time_move * node.avg_energy + p1 + (p - node.avg_energy) * item
             if temp < energy_min:
                 nb_dead += 1
-        for index, p, p1 in s2:
-            temp = network.node[index].energy - time_move * network.node[index].avg_energy + p1 + (
-                        p - network.node[index].avg_energy) * item
+        for node, p, p1 in s2:
+            temp = node.energy - time_move * node.avg_energy + p1 + (p - node.avg_energy) * item
             if temp < energy_min:
                 nb_dead += 1
         dead_list.append(nb_dead)
@@ -211,7 +209,7 @@ def network_clustering(optimizer, network=None, nb_cluster=81):
     kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X, sample_weight=Y)
     charging_pos = []
     for pos in kmeans.cluster_centers_:
-        charging_pos.append((int(pos[0]), int(pos[1])))
+        charging_pos.append([int(pos[0]), int(pos[1])])
     charging_pos.append(para.depot)
     # print(charging_pos, file=open('log/centroid.txt', 'w'))
     node_distribution_plot(network=network, charging_pos=charging_pos)
@@ -241,7 +239,7 @@ def network_clustering_v2(optimizer, network=None, nb_cluster=81):
     kmeans = KMeans(n_clusters=nb_cluster, random_state=0).fit(X)
     charging_pos = []
     for pos in kmeans.cluster_centers_:
-        charging_pos.append((int(pos[0]), int(pos[1])))
+        charging_pos.append([int(pos[0]), int(pos[1])])
     charging_pos.append(para.depot)
     # print(charging_pos, file=open('log/centroid.txt', 'w'))
     # node_distribution_plot(network=network, charging_pos=charging_pos)

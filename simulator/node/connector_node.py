@@ -17,8 +17,8 @@ class ConnectorNode(Node):
         if not self.is_active:
             return Node(id = -1)
 
-        #if self.candidate is not None and self.candidate.is_active == True:
-        #    return self.candidate
+        if self.candidate is not None and self.candidate.is_active == True:
+            return self.candidate
         
         distance_min = 10000007.0
         node_min = Node(id = -1)
@@ -28,7 +28,6 @@ class ConnectorNode(Node):
                 and node.cluster_id == self.cluster_id and self.level > node.level): 
             # if(name == "ConnectorNode" or name == "InNode" or name == "OutNode") and self.cluster_id == node.cluster_id:
             # với connector node thì cần phải xét level nếu không sẽ gửi lộn
-
                 if distance.euclidean(node.location, net.listClusters[self.cluster_id].centroid) < distance_min:
                     self.candidate = node
                     node_min = node

@@ -121,14 +121,6 @@ class Network:
         past_package = nb_package
         update_path = True
 
-        #for node in self.node:
-        #    print("Node", node.id, node.location, "receiver", node.find_receiver(net=self).id, node.find_receiver(net=self).location)
-        #for node in self.node[38].neighbor:
-        #    print(node.id, node.location)
-        #for node in self.node:
-        #    print(node.id, node.level)
-        #print(distance.euclidean(self.node[97].location, self.node[122].location) <= self.com_range)
-
         while self.t <= max_time:
             self.t = self.t + 1
             if (self.t - 1) % 100 == 0:
@@ -136,23 +128,19 @@ class Network:
 
                 avg = 0
                 cha = 0
-                pac = 0
 
                 for node in self.node:
                     avg = avg + node.actual_used #/ self.t
-                    pac = pac + node.sent_through
                     if node.charged_count > 0:
                         cha = cha + node.charged / node.charged_count #/ self.t
                 avg = avg / len(self.node)
                 cha = cha / len(self.node)
-                pac = pac / len(self.node)
 
                 print("[Network] Simulating time: {}s, lowest energy node: {:.4f}, average used: {:.4f}, average charged: {:.4f}, packages sent: {} at {}".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].sent_through, self.node[mi].location))
-                print('\t\tSum used of all nodes: {:.6f}, average (time): {:.6f}'.format(avg, avg / self.t))
-                print('\t\tSum charged of all nodes: {:.6f}, average (time): {:.6f}'.format(cha, cha / self.t))
+                print('\t\tAverage used of all nodes: {:.6f}, average (time): {:.6f}'.format(avg, avg / self.t))
+                print('\t\tAverage charged of all nodes: {:.6f}, average (time): {:.6f}'.format(cha, cha / self.t))
                 print('\t\tNumber of dead nodes: {}'.format(past_dead))
                 print('\t\tNumber of packages: {}'.format(past_package))
-                print('\t\tAverage of packages sent: {}'.format(pac))
 
                 #for node in self.node:
                 #    print(node.id, node.location, node.sent_through)
@@ -270,7 +258,7 @@ class Network:
         min_energy = 10 ** 10
         min_id = -1
         for index, node in enumerate(self.node):
-            if node.energy < min_energy:
+            if node.energy > 0 and node.energy < min_energy:
                 min_energy = node.energy
                 min_id = index
         return min_id

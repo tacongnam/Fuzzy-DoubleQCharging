@@ -28,6 +28,7 @@ class MobileCharger:
         self.state = depot_state # Current state in Q_table
 
         self.double_q = double_q
+        
         if self.double_q == True:
             print("MC", self.id, "enable double q-learning")
         else:
