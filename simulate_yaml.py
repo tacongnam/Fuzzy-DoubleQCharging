@@ -169,14 +169,20 @@ class Simulation:
         for nb_run in range(run_times):
             random.seed(nb_run)
 
+            print("[Simulator] Repeat ", nb_run, ":")
+
             # Initialize Sensor Nodes and Targets
             list_node, target_pos, list_clusters = self.buildSensor()
 
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=self.double_q)
-                mc_list.append(mc)
+                if nb_run < 3:
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=True)
+                    mc_list.append(mc)
+                else:
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=False)
+                    mc_list.append(mc)
 
             # Construct Network
             net_log_file = "log/network_log_new_network_{}.csv".format(nb_run)
@@ -273,5 +279,4 @@ print(r"""
 
 p = Simulation('data/test_750.yaml')
 p.makeNetwork()
-for nb_run in range(5):
-    p.runSimulator(1, 500)
+p.runSimulator(5, 500)

@@ -131,7 +131,7 @@ class Network:
             #    if mc.get_status() == "charging":
             #        time_skip = 1
 
-            if (self.t - 1) % 100 == 0:
+            if (self.t - 1) % 250 == 0:
                 mi = self.find_min_node()
 
                 avg = 0
