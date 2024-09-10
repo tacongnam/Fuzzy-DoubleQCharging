@@ -105,7 +105,7 @@ class Network:
 
         if t == 0:
             with open(self.net_log_file, "w") as information_log:
-                writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'sum_all', 'average_all_per_second', 'charged_all', 'average_charged_all_per_second', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
+                writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'average_used_of_each_node', 'average_used_of_each_node_this_second', 'average_charged_of_each_node_per_time', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                 writer.writeheader()
             
             with open(self.mc_log_file, "w") as mc_log:
@@ -131,26 +131,35 @@ class Network:
             #    if mc.get_status() == "charging":
             #        time_skip = 1
 
-            if (self.t - 1) % 250 == 0:
+            if (self.t - 1) % 100 == 0:
                 mi = self.find_min_node()
 
                 avg = 0
                 cha = 0
+                cnt_node = 0
 
                 for node in self.node:
-                    avg = avg + node.actual_used #/ self.t
+                    avg += node.actual_used #/ self.t
                     if node.charged_count > 0:
-                        cha = cha + node.charged / node.charged_count #/ self.t
-                avg = avg / len(self.node)
-                cha = cha / len(self.node)
+                        cha += node.charged / node.charged_count
+                        cnt_node += 1
 
-                print("\n[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f}, charged: {:.4f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
-                print("\t\tPrevious lowest node: id = {}, energy = {:.4f}, charge = {:.4f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))
-                print('\t\tAverage used of each nodes: {:.6f}, average each node per second: {:.6f}'.format(avg, avg / self.t))
-                print('\t\tAverage charged of each nodes: {:.6f}'.format(cha))
-                print('\t\tNumber of dead nodes: {}'.format(past_dead))
-                print('\t\tNumber of packages: {}'.format(past_package))
-                print('\t\t-----------------------\n')
+                avg = avg / len(self.node)
+                if cnt_node > 0:
+                    cha = cha / cnt_node
+
+                if (self.t - 1) % 300 == 0:
+                    print("\n[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f}, charged: {:.4f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
+                    print('\t\t-----------------------')
+                    print("\t\tPrevious lowest node: id = {}, energy = {:.4f}, charge = {:.4f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))
+                    print('\t\tAverage used of each node: {:.6f}, average each node per second: {:.6f}'.format(avg, avg / self.t))
+                    print('\t\tAverage charged of each node this second: {:.6f}'.format(cha))
+                    print('\t\tNumber of dead nodes: {}'.format(past_dead))
+                    print('\t\tNumber of packages: {}'.format(past_package))
+                    print('\t\t-----------------------\n')
+
+                    for mc in self.mc_list:
+                        print("\t\tMC #{} is {} at {} with energy {}".format(mc.id, mc.get_status(), mc.current, mc.energy))
 
                 last_mi = mi
 
@@ -165,10 +174,9 @@ class Network:
                     'lowest_node_location': self.node[mi].location,
                     'theta': optimizer.alpha,     
                     'avg_energy': self.get_average_energy(),
-                    'sum_all': avg,
-                    'average_all_per_second': avg / self.t,
-                    'charged_all': avg,
-                    'average_charged_all_per_second': avg / self.t,
+                    'average_used_of_each_node': avg,
+                    'average_used_of_each_node_this_second': avg / self.t,
+                    'average_charged_of_each_node_per_time': cha,
                     'MC_0_status' : self.mc_list[0].get_status(),
                     'MC_1_status' : self.mc_list[1].get_status(),
                     'MC_2_status' : self.mc_list[2].get_status(),
@@ -177,10 +185,8 @@ class Network:
                     'MC_2_location' : self.mc_list[2].current,
                 }
                 with open(self.net_log_file, 'a') as information_log:
-                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'sum_all', 'average_all_per_second', 'charged_all', 'average_charged_all_per_second', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
+                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'average_used_of_each_node', 'average_used_of_each_node_this_second', 'average_charged_of_each_node_per_time', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
-                for mc in self.mc_list:
-                    print("\t\tMC #{} is {} at {} with energy {}".format(mc.id, mc.get_status(), mc.current, mc.energy))
 
                 # for node in self.node:
                 #    print("\tNode", node.id, node.energy)
@@ -211,6 +217,8 @@ class Network:
             # for node in self.node:
             #    print("\tNode", node.id, node.energy, node.sent_through, node.actual_used, node.dist_sent)
 
+            self.calculate_charged_per_sec()
+
             if not self.package_lost:
                 if current_package < len(self.target):
                     self.package_lost = True
@@ -219,26 +227,29 @@ class Network:
             if (current_dead != nb_dead and past_dead != current_dead) or (current_package != nb_package and current_package != past_package):
                 avg = 0
                 cha = 0
+                cnt_node = 0
 
                 for node in self.node:
-                    avg = avg + node.actual_used #/ self.t
+                    avg += node.actual_used #/ self.t
                     if node.charged_count > 0:
-                        cha = cha + node.charged / node.charged_count #/ self.t
+                        cha += node.charged / node.charged_count
+                        cnt_node += 1
+
                 avg = avg / len(self.node)
-                cha = cha / len(self.node)
+                if cnt_node > 0:
+                    cha = cha / cnt_node
 
                 network_info = {
                     'time_stamp' : self.t,
-                    'number_of_dead_nodes' : current_dead,
-                    'number_of_monitored_target' : current_package,
-                    'lowest_node_energy': round(self.node[self.find_min_node()].energy, 3),
-                    'lowest_node_location': self.node[self.find_min_node()].location,
+                    'number_of_dead_nodes' : past_dead,
+                    'number_of_monitored_target' : past_package,
+                    'lowest_node_energy': round(self.node[mi].energy, 3),
+                    'lowest_node_location': self.node[mi].location,
                     'theta': optimizer.alpha,
                     'avg_energy': self.get_average_energy(),
-                    'sum_all': avg,
-                    'average_all_per_second': avg / self.t,
-                    'charged_all': avg,
-                    'average_charged_all_per_second': avg / self.t,
+                    'average_used_of_each_node': avg,
+                    'average_used_of_each_node_this_second': avg / self.t,
+                    'average_charged_of_each_node_per_time': cha,
                     'MC_0_status' : self.mc_list[0].get_status(),
                     'MC_1_status' : self.mc_list[1].get_status(),
                     'MC_2_status' : self.mc_list[2].get_status(),
@@ -247,7 +258,7 @@ class Network:
                     'MC_2_location' : self.mc_list[2].current,
                 }
                 with open(self.net_log_file, 'a') as information_log:
-                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'sum_all', 'average_all_per_second', 'charged_all', 'average_charged_all_per_second', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
+                    node_writer = csv.DictWriter(information_log, fieldnames=['time_stamp', 'number_of_dead_nodes', 'number_of_monitored_target', 'lowest_node_energy', 'lowest_node_location', 'theta', 'avg_energy', 'average_used_of_each_node', 'average_used_of_each_node_this_second', 'average_charged_of_each_node_per_time', 'MC_0_status', 'MC_1_status', 'MC_2_status', 'MC_0_location', 'MC_1_location', 'MC_2_location'])
                     node_writer.writerow(network_info)
             
             past_dead = current_dead
@@ -274,6 +285,12 @@ class Network:
                 min_energy = node.energy
                 min_id = index
         return min_id
+
+    def calculate_charged_per_sec(self, t=0):
+        for node in self.node:
+            if node.charged_added > 0:
+                node.charged_count += 1
+            node.charged_added = 0
 
     def count_dead_node(self):
         count = 0

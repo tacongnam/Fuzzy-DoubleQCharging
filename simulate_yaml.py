@@ -277,6 +277,8 @@ print(r"""
     
     """)
 
+print("Double Q - normal")
+
 p = Simulation('data/test_750.yaml')
 p.makeNetwork()
-p.runSimulator(5, 500)
+p.runSimulator(5, 100)
