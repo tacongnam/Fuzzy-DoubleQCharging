@@ -279,6 +279,6 @@ print(r"""
 
 print("Double Q - normal")
 
-p = Simulation('data/hanoi1000n50_new.yaml')
+p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
 p.runSimulator(10, 108000)
