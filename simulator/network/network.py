@@ -96,7 +96,7 @@ class Network:
                 mc.run(time_stem=t, net=self, optimizer=optimizer, update_path=update_path)
         return state
 
-    def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=500000):
+    def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=604800):
         print('Simulating...')
         nb_dead = self.count_dead_node()
         nb_package = self.count_package()
@@ -270,7 +270,7 @@ class Network:
         print('\n[Network]: Finished with {} dead sensors, {} packages at {}s!'.format(self.count_dead_node(), self.count_package(), dead_time))
         return dead_time, nb_dead
 
-    def simulate(self, optimizer=None, t=0, dead_time=0, max_time=500000):
+    def simulate(self, optimizer=None, t=0, dead_time=0, max_time=604800):
         life_time = self.simulate_max_time(optimizer=optimizer, t=t, dead_time=dead_time, max_time=max_time)
         return life_time
 

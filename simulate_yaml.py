@@ -177,11 +177,11 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < 3:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=True)
+                if nb_run < 5:
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
                 else:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=False)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
 
             # Construct Network
@@ -279,6 +279,6 @@ print(r"""
 
 print("Double Q - normal")
 
-p = Simulation('data/test_750.yaml')
+p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
-p.runSimulator(5, 100)
+p.runSimulator(10, 108000)
