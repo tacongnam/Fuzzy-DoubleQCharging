@@ -76,7 +76,7 @@ class Q_learningv2:
         third = third / np.sum(third)
 
         for index in range(len(q_table)):
-            self.reward[index] = (3 * first[index] + second[index] + third[index]) / 5
+            self.reward[index] = (2 * first[index] + second[index] + third[index]) / 4
             #if distance.euclidean(mc.current, self.action_list[index]) > 0:
             #    self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
 
