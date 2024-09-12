@@ -277,7 +277,7 @@ print(r"""
     
     """)
 
-print("Double Q - 2x 100 all connect")
+print("Double Q - charge/distance 100 all connect")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
