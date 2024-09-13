@@ -277,8 +277,8 @@ print(r"""
     
     """)
 
-print("Double Q - change update 100 all connect")
+print("Double Q - change update 100 new")
 
-p = Simulation('data/hanoi1000n50_allconnect.yaml')
+p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
 p.runSimulator(5, 108000)
