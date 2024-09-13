@@ -177,7 +177,7 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run > 1:
+                if nb_run < 5:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
                 else:
@@ -277,8 +277,8 @@ print(r"""
     
     """)
 
-print("Double Q - normal all connector")
+print("Double Q - change update 100 all connect")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
-p.runSimulator(6, 108000)
+p.runSimulator(5, 108000)

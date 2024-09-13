@@ -37,15 +37,17 @@ class Q_learningv2:
             if np.random.rand() < 0.5:
                 self.set_reward(q_table=self.q1, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
                 self.q1[mc.state] =  (1 - self.q_alpha) * self.q1[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q2, q_max_func))
+                self.choose_next_state(mc, self.q2)
             else:
                 self.set_reward(q_table=self.q2, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
                 self.q2[mc.state] =  (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
+                self.choose_next_state(mc, self.q1)
+
             self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
         else:
             self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
             self.q_table[mc.state] =  (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
-
-        self.choose_next_state(mc, self.q_table)
+            self.choose_next_state(mc, self.q_table)
 
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
