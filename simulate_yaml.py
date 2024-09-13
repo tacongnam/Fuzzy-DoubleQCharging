@@ -277,7 +277,7 @@ print(r"""
     
     """)
 
-print("Double Q - 2x all connector")
+print("Double Q - normal all connector")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
