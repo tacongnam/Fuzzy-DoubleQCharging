@@ -78,9 +78,16 @@ class Q_learningv2:
         third = third / np.sum(third)
 
         for index in range(len(q_table)):
-            self.reward[index] = (first[index] + second[index] + third[index])
-            # if distance.euclidean(mc.current, self.action_list[index]) > 0:
-            #    self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
+            if para.test_id < 5 or (para.test_id >= 20 and para.test_id < 25):
+                self.reward[index] = (first[index] + second[index] + third[index])
+            elif para.test_id < 10 or (para.test_id >= 20 and para.test_id < 30):
+                self.reward[index] = (2 * first[index] + second[index] + third[index])
+            elif para.test_id < 15 or (para.test_id >= 20 and para.test_id < 35):
+                self.reward[index] = (2 * first[index] + second[index] + third[index])
+            elif para.test_id < 20 or (para.test_id >= 20 and para.test_id < 40):
+                self.reward[index] = (first[index] + second[index] + third[index])
+                if distance.euclidean(mc.current, self.action_list[index]) > 0:
+                    self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
 
         # print(self.reward)
         self.reward_max = list(zip(first, second, third))
