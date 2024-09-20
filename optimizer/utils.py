@@ -137,7 +137,7 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
 
     # request_id = [request["id"] for request in network.mc.list_request]
     FLCDS = q_learning.FLCDS    
-    L_r_crisp = len(q_learning.list_request)
+    L_r_crisp = q_learning.energy_thresh_len
     E_min_crisp = network.node[network.find_min_node()].energy
 
     FLCDS.input['L_r'] = L_r_crisp
@@ -147,7 +147,12 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     q_learning.alpha = alpha
 
     # energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
-    energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
+    energy_min = 0.4 * network.node[0].energy_max + alpha * 0.6 * network.node[0].energy_max
+
+    if L_r_crisp == 0:
+        energy_min = network.node[0].energy_max
+
+    #print(energy_min)
 
     s1 = []  # list of node in request list which has positive charge
     s2 = []  # list of node not in request list which has negative charge
@@ -212,6 +217,11 @@ def network_clustering(optimizer, network=None, nb_cluster=81):
     # print(charging_pos, file=open('log/centroid.txt', 'w'))
     node_distribution_plot(network=network, charging_pos=charging_pos)
     network_plot(network=network, charging_pos=charging_pos)
+
+    for node in network.node:
+        node.energy_thresh = node.energy_max
+    
+    print("Charging position done!")
     return charging_pos
 
 def network_clustering_v2(optimizer, network=None, nb_cluster=81):

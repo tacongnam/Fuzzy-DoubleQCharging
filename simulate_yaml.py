@@ -49,7 +49,7 @@ class Simulation:
         self.energy = self.net_argc['node_phy_spe']['capacity']
         self.energy_max = self.net_argc['node_phy_spe']['capacity']
         self.node_pos = self.net_argc['nodes']
-        self.energy_thresh = 0.4 * self.energy #net_argc['node_phy_spe']['threshold']  
+        self.energy_thresh = 0 * self.energy #net_argc['node_phy_spe']['threshold']  
 
         self.double_q = True
         #dq = input("Double Q Learning or not? Y / N: ")
@@ -173,35 +173,17 @@ class Simulation:
 
             print("[Simulator] Repeat ", nb_run, ":")
 
-            if para.test_id < 5:
-                print("Double Q 50old normal")
-            elif para.test_id < 10:
-                print("Double Q 50old 2x")
-            elif para.test_id < 15:
-                print("Double Q 50old 3x")
-            elif para.test_id < 20:
-                print("Double Q 50old charge/dist")
-            elif para.test_id < 25:
-                print("Q 50old normal")
-            elif para.test_id < 30:
-                print("Q 50old 2x")
-            elif para.test_id < 35:
-                print("Q 50old 3x")
-            elif para.test_id < 40:
-                print("Q 50old charge/dist")
-
-
             # Initialize Sensor Nodes and Targets
             list_node, target_pos, list_clusters = self.buildSensor()
 
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < 20:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
+                if nb_run < 5:
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
 
             # Construct Network
@@ -297,6 +279,6 @@ print(r"""
     
     """)
 
-p = Simulation('data/hanoi1000n50.yaml')
+p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
-p.runSimulator(40, 108000)
+p.runSimulator(10, 108000)

@@ -80,20 +80,16 @@ class Network:
         state = self.communicate()
         self.request_id = []
         for index, node in enumerate(self.node):
-            if node.energy < node.energy_thresh:
+            if t > 200:
                 node.request(index=index, optimizer=optimizer, t=t) # index of sensor, not sensor id
                 self.request_id.append(index)
             else:
                 node.is_request = False
-
-        if self.request_id:
-            for index, node in enumerate(self.node):
-                if index not in self.request_id and (t - node.check_point[-1]["time"]) > 50:
-                    node.set_check_point(t)
             
         if optimizer and self.active:
             for mc in self.mc_list:
                 mc.run(time_stem=t, net=self, optimizer=optimizer, update_path=update_path)
+
         return state
 
     def simulate_max_time(self, optimizer=None, t=0, dead_time=0, max_time=604800):
@@ -152,8 +148,8 @@ class Network:
                     print("\n[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f}, charged: {:.4f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
                     print('\t\t-----------------------')
                     print("\t\tPrevious lowest node: id = {}, energy = {:.4f}, charge = {:.4f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))
-                    print('\t\tAverage used of each node: {:.6f}, average each node per second: {:.6f}'.format(avg, avg / self.t))
-                    print('\t\tAverage charged of each node this second: {:.6f}'.format(cha))
+                    print('\t\tAverage used of each node: {:.6f}, average each node per second: {:.4f}'.format(avg, avg / self.t))
+                    print('\t\tAverage charged of each node this second: {:.4f}'.format(cha))
                     print('\t\tNumber of dead nodes: {}'.format(past_dead))
                     print('\t\tNumber of packages: {}'.format(past_package))
                     print('\t\t-----------------------\n')

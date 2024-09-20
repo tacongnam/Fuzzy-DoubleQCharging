@@ -54,6 +54,7 @@ class Node:
         :param t: time stem
         :return: if queue of check point is not full, add new check point
         """
+        
         if len(self.check_point) >= self.len_cp:
             self.check_point.pop(0)
             

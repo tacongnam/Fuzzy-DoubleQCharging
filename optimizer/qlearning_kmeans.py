@@ -21,6 +21,9 @@ class Q_learningv2:
         self.q_alpha = q_alpha
         self.q_gamma = q_gamma
 
+        self.print = False
+        self.energy_thresh_len = 0
+
         self.FLCDS = FLCDS_model(network=net)
         self.all_path = get_all_path(net=net)
     
@@ -32,6 +35,11 @@ class Q_learningv2:
             return self.action_list[mc.state], -1.0
         
         # self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
+
+        self.energy_thresh_len = 0
+        for node in network.node:
+            if node.energy < node.energy_max * 0.4:
+                self.energy_thresh_len += 1
 
         if doubleq == True:
             if np.random.rand() < 0.5:
@@ -54,8 +62,8 @@ class Q_learningv2:
         else:
             charging_time = self.charging_time[mc.state]
         
-        if charging_time > 1:
-            print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
+        # if charging_time > 1:
+        #    print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
 
         # print(self.charging_time)
         return self.action_list[mc.state], charging_time
@@ -73,21 +81,20 @@ class Q_learningv2:
             second[index] = temp[1]
             third[index] = temp[2]
             self.charging_time[index] = temp[3]
+
+            if self.print == False:
+                print("\tCharging pos {}: First {:.4f}, Second {:.4f}, Third {:.4f}".format(self.action_list[index], first[index], second[index], third[index]))
+        
+        self.print = True
+
         first = first / np.sum(first)
         second = second / np.sum(second)
         third = third / np.sum(third)
 
         for index in range(len(q_table)):
-            if para.test_id < 5 or (para.test_id >= 20 and para.test_id < 25):
-                self.reward[index] = (first[index] + second[index] + third[index])
-            elif para.test_id < 10 or (para.test_id >= 20 and para.test_id < 30):
-                self.reward[index] = (2 * first[index] + second[index] + third[index])
-            elif para.test_id < 15 or (para.test_id >= 20 and para.test_id < 35):
-                self.reward[index] = (2 * first[index] + second[index] + third[index])
-            elif para.test_id < 20 or (para.test_id >= 20 and para.test_id < 40):
-                self.reward[index] = (first[index] + second[index] + third[index])
-                if distance.euclidean(mc.current, self.action_list[index]) > 0:
-                    self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
+            self.reward[index] = (3 * first[index] + second[index] + third[index])
+            # if distance.euclidean(mc.current, self.action_list[index]) > 0:
+            #   self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
 
         # print(self.reward)
         self.reward_max = list(zip(first, second, third))
