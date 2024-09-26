@@ -179,7 +179,7 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < 5:
+                if nb_run < 1:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
@@ -281,4 +281,4 @@ print(r"""
 
 p = Simulation('data/hanoi1000n50_new.yaml')
 p.makeNetwork()
-p.runSimulator(10, 108000)
+p.runSimulator(5, 108000)

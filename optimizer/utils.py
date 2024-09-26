@@ -110,10 +110,11 @@ def FLCDS_model(network=None):
     E_min['M'] = fuzz.trimf(E_min.universe, [0.25 * max_energy, 0.5 * max_energy, 0.75 * max_energy])
     E_min['H'] = fuzz.trapmf(E_min.universe, [0.5 * max_energy, 0.75 * max_energy, max_energy, max_energy])
 
-    Theta['VL'] = fuzz.trimf(Theta.universe, [0, 0, 1/3])
-    Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/3, 2/3])
-    Theta['M'] = fuzz.trimf(Theta.universe, [1/3, 2/3, 1])
-    Theta['H'] = fuzz.trimf(Theta.universe, [2/3, 1, 1])
+    Theta['VL'] = fuzz.trimf(Theta.universe, [0.4, 0.4, 0.6])
+    Theta['L'] = fuzz.trimf(Theta.universe, [0.4, 0.6, 0.8])
+    Theta['M'] = fuzz.trimf(Theta.universe, [0.6, 0.8, 1])
+    Theta['H'] = fuzz.trimf(Theta.universe, [0.8, 1, 1])
+
 
     R1 = ctrl.Rule(L_r['L'] & E_min['L'], Theta['H'])
     R2 = ctrl.Rule(L_r['L'] & E_min['M'], Theta['M'])
@@ -147,10 +148,7 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     q_learning.alpha = alpha
 
     # energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
-    energy_min = 0.4 * network.node[0].energy_max + alpha * 0.6 * network.node[0].energy_max
-
-    if L_r_crisp == 0:
-        energy_min = network.node[0].energy_max
+    energy_min = E_min_crisp + alpha * (network.node[0].energy_max - E_min_crisp)
 
     #print(energy_min)
 
