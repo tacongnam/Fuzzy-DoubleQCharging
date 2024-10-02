@@ -49,7 +49,7 @@ class Simulation:
         self.energy = self.net_argc['node_phy_spe']['capacity']
         self.energy_max = self.net_argc['node_phy_spe']['capacity']
         self.node_pos = self.net_argc['nodes']
-        self.energy_thresh = 0 * self.energy #net_argc['node_phy_spe']['threshold']  
+        self.energy_thresh = self.net_argc['node_phy_spe']['threshold']
 
         self.double_q = True
         #dq = input("Double Q Learning or not? Y / N: ")
@@ -168,8 +168,6 @@ class Simulation:
         
         for nb_run in range(run_times):
             random.seed(nb_run)
-
-            para.test_id = nb_run
 
             print("[Simulator] Repeat ", nb_run, ":")
 
