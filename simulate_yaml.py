@@ -49,7 +49,7 @@ class Simulation:
         self.energy = self.net_argc['node_phy_spe']['capacity']
         self.energy_max = self.net_argc['node_phy_spe']['capacity']
         self.node_pos = self.net_argc['nodes']
-        self.energy_thresh = self.net_argc['node_phy_spe']['threshold']
+        self.energy_thresh = 0.8 * self.energy #net_argc['node_phy_spe']['threshold']  
 
         self.double_q = True
         #dq = input("Double Q Learning or not? Y / N: ")
@@ -72,7 +72,7 @@ class Simulation:
                 target_pos.append(new_target)
                 target_id += 1
         # print(list_clusters)
-        # print('Build Sensors - Build targets: Done')
+        print('Build Sensors - Build targets: Done')
         list_node = []
 
         # Build connector node
@@ -87,7 +87,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        # print('Build Sensors - Build connector node: Done')
+        print('Build Sensors - Build connector node: Done')
 
         # Build in node
         in_node_data = self.net_argc['InNode']
@@ -101,7 +101,7 @@ class Simulation:
             gen_node.init_inNode()
             list_node.append(gen_node)
         
-        # print('Build Sensors - Build in node: Done')
+        print('Build Sensors - Build in node: Done')
         
         # Build out node
         out_node_data = self.net_argc['OutNode']
@@ -115,7 +115,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        # print('Build Sensors - Build out node: Done')
+        print('Build Sensors - Build out node: Done')
         
         # Build sensor node
         sensor_node_data = self.net_argc['SensorNode']
@@ -129,7 +129,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        # print('Build Sensors - Build sensor node: Done')
+        print('Build Sensors - Build sensor node: Done')
         
         # Build relay node
         relay_node_data = self.net_argc['RelayNode']
@@ -144,7 +144,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        # print('Build Sensors - Build relay node: Done')
+        print('Build Sensors - Build relay node: Done')
 
         list_sorted = sorted(list_node, key=lambda x: x.cluster_id, reverse=True)
 
@@ -177,11 +177,11 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < 1:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
+                if nb_run < 3:
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
                 else:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
 
             # Construct Network
@@ -277,6 +277,8 @@ print(r"""
     
     """)
 
-p = Simulation('data/hanoi1000n50_new.yaml')
+print("Double Q - 3x all connector")
+
+p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
-p.runSimulator(5, 108000)
+p.runSimulator(6, 108000)

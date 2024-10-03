@@ -79,8 +79,8 @@ class MobileCharger:
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
 
-        if self.end != [0.0, 0.0]: #and self.moving_time != 0:
-            print("[Mobile Charger] MC #{} moves to {} in {}s and charging with energy {:.4f}".format(self.id, self.end, self.moving_time, self.energy))
+        if self.end != [0.0, 0.0] and self.moving_time != 0:
+            print("[Mobile Charger] MC #{} moves to {} in {}s and charges for {}s".format(self.id, self.end, self.moving_time, charging_time))
         elif self.end == [0.0, 0.0]:
             print("[Mobile Charger] MC #{} is self-charge for {}s".format(self.id, self.moving_time + charging_time))
 
