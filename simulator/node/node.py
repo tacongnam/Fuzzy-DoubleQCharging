@@ -33,9 +33,10 @@ class Node:
         self.potentialSender = [] # là danh sách con của neighbor nhưng có khả năng gửi gói tin cho self
         self.listTargets = [] # danh sách các targets trong phạm vi có thể theo dõi, không tính tới việc sẽ theo dõi các targets này hay không
 
-        self.sent_through = 0
-        self.charged = 0
-        self.charged_count = 0
+        self.sent_through = 0   # số package gửi qua
+        self.charged = 0        # năng lượng đã sạc
+        self.charged_added = 0  # năng lượng đã sạc trong giây
+        self.charged_count = 0  # số giây đã sạc
 
         self.candidate = None
 
@@ -74,7 +75,7 @@ class Node:
             # print("p_actual", self.id, self.energy_max - self.energy, p_theory, p_actual, mc.id)
             self.energy = self.energy + p_actual
             self.charged += p_actual
-            self.charged_count += 1
+            self.charged_added += p_actual
             return p_actual
         else:
             return 0

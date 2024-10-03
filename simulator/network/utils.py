@@ -5,11 +5,12 @@ from scipy.spatial import distance
 
 from simulator.network.package import Package
 from simulator.node.const import Node_Type
+from simulator.network import parameter as para
 
 def uniform_com_func(net):
     for target in net.target:
         # Xac xuat truyen goi tin moi giay = 60%
-        if random.random() > 0.6:
+        if random.random() > para.prob:
             continue
         for node in target.listSensors:
             if node[0].is_active == False:

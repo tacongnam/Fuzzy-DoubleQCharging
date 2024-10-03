@@ -49,7 +49,7 @@ class Simulation:
         self.energy = self.net_argc['node_phy_spe']['capacity']
         self.energy_max = self.net_argc['node_phy_spe']['capacity']
         self.node_pos = self.net_argc['nodes']
-        self.energy_thresh = 0.4 * self.energy #net_argc['node_phy_spe']['threshold']  
+        self.energy_thresh = 0.8 * self.energy #net_argc['node_phy_spe']['threshold']  
 
         self.double_q = True
         #dq = input("Double Q Learning or not? Y / N: ")
@@ -178,10 +178,10 @@ class Simulation:
             mc_list = []
             for id in range(self.nb_mc):
                 if nb_run < 3:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=True)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
                 else:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=0.01, e_self_charge=10, velocity=5, depot_state = self.clusters, double_q=False)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
 
             # Construct Network
@@ -277,6 +277,8 @@ print(r"""
     
     """)
 
-p = Simulation('data/test_750.yaml')
+print("Double Q - 3x all connector")
+
+p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
-p.runSimulator(5, 500)
+p.runSimulator(6, 108000)

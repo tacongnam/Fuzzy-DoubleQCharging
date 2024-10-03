@@ -31,7 +31,7 @@ class Q_learningv2:
         if not len(self.list_request):
             return self.action_list[mc.state], -1.0
         
-        self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
+        # self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
 
         if doubleq == True:
             if np.random.rand() < 0.5:
@@ -40,12 +40,13 @@ class Q_learningv2:
             else:
                 self.set_reward(q_table=self.q2, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
                 self.q2[mc.state] =  (1 - self.q_alpha) * self.q2[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q1, q_max_func))
-            
             self.q_table[mc.state] = (self.q1[mc.state] + self.q2[mc.state]) / 2
-        else:        
-            self.q_table[mc.state] = (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
+        else:
+            self.set_reward(q_table=self.q_table, mc=mc,time_stem=time_stem, reward_func=reward_func, network=network)
+            self.q_table[mc.state] =  (1 - self.q_alpha) * self.q_table[mc.state] + self.q_alpha * (self.reward + self.q_gamma * self.q_max(mc, self.q_table, q_max_func))
 
         self.choose_next_state(mc, self.q_table)
+
         if mc.state == len(self.action_list) - 1:
             charging_time = (mc.capacity - mc.energy) / mc.e_self_charge
         else:
@@ -75,9 +76,9 @@ class Q_learningv2:
         third = third / np.sum(third)
 
         for index in range(len(q_table)):
-            self.reward[index] = (first[index] + second[index] + third[index])
-            if distance.euclidean(mc.current, self.action_list[index]) > 0:
-                self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
+            self.reward[index] = (3 * first[index] + second[index] + third[index]) / 5
+            # if distance.euclidean(mc.current, self.action_list[index]) > 0:
+            #    self.reward[index] = self.reward[index] * (self.charging_time[index] ** 2) / distance.euclidean(mc.current, self.action_list[index])
 
         # print(self.reward)
         self.reward_max = list(zip(first, second, third))

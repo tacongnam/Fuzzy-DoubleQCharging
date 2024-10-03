@@ -79,9 +79,9 @@ class MobileCharger:
         self.end_time = time_stem + self.moving_time + charging_time
         self.arrival_time = time_stem + self.moving_time
 
-        if self.end != [0.0, 0.0]:
+        if self.end != [0.0, 0.0] and self.moving_time != 0:
             print("[Mobile Charger] MC #{} moves to {} in {}s and charges for {}s".format(self.id, self.end, self.moving_time, charging_time))
-        else:
+        elif self.end == [0.0, 0.0]:
             print("[Mobile Charger] MC #{} is self-charge for {}s".format(self.id, self.moving_time + charging_time))
 
         with open(network.mc_log_file, "a") as mc_log_file:
