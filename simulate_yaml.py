@@ -279,6 +279,12 @@ print(r"""
 
 print("Double Q - 3x all connector")
 
-p = Simulation('data/hanoi1000n50_new.yaml')
-p.makeNetwork()
-p.runSimulator(6, 108000)
+p1 = Simulation('data/hanoi1000n50_allconnect.yaml')
+p1.makeNetwork()
+p1.runSimulator(6, 108000)
+
+print("Double Q - 3x new")
+
+p2 = Simulation('data/hanoi1000n50_new.yaml')
+p2.makeNetwork()
+p2.runSimulator(6, 108000)

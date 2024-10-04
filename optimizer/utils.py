@@ -136,19 +136,22 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
 
     # request_id = [request["id"] for request in network.mc.list_request]
-    FLCDS = q_learning.FLCDS    
-    L_r_crisp = len(q_learning.list_request)
-    E_min_crisp = network.node[network.find_min_node()].energy
+    FLCDS = q_learning.FLCDS
+    L_r_crisp = 0
+    for request in q_learning.list_request:
+        if request["energy"] < 0.4 * network.node[0].energy_max:
+            L_r_crisp += 1
 
-    FLCDS.input['L_r'] = L_r_crisp
+    E_min_crisp = network.node[network.find_min_node()].energy
     FLCDS.input['E_min'] = E_min_crisp
+    FLCDS.input['L_r'] = L_r_crisp
     FLCDS.compute()
     alpha = FLCDS.output['Theta']
     q_learning.alpha = alpha
-
+    
     if E_min_crisp > 0.4 * network.node[0].energy_max:
         energy_min = E_min_crisp + alpha * (network.node[0].energy_max - E_min_crisp)
-    else:
+    else:     
         energy_min = 0.4 * network.node[0].energy_max + alpha * (network.node[0].energy_max - 0.4 * network.node[0].energy_max)
 
     s1 = []  # list of node in request list which has positive charge
