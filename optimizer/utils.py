@@ -147,7 +147,7 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     q_learning.alpha = alpha
 
     # energy_min = network.node[0].energy_thresh + alpha * network.node[0].energy_max
-    energy_min = network.node[0].energy_thresh + alpha * (network.node[0].energy_max - network.node[0].energy_thresh)
+    energy_min = E_min_crisp + alpha * (network.node[0].energy_max - E_min_crisp)
 
     s1 = []  # list of node in request list which has positive charge
     s2 = []  # list of node not in request list which has negative charge

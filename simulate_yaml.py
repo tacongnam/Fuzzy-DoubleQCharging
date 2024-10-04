@@ -49,7 +49,7 @@ class Simulation:
         self.energy = self.net_argc['node_phy_spe']['capacity']
         self.energy_max = self.net_argc['node_phy_spe']['capacity']
         self.node_pos = self.net_argc['nodes']
-        self.energy_thresh = 0.8 * self.energy #net_argc['node_phy_spe']['threshold']  
+        self.energy_thresh = 0.9 * self.energy #net_argc['node_phy_spe']['threshold']  
 
         self.double_q = True
         #dq = input("Double Q Learning or not? Y / N: ")
@@ -177,11 +177,11 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < 3:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
+                if nb_run < 1:
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
 
             # Construct Network
