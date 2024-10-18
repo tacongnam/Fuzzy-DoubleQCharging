@@ -131,7 +131,7 @@ class Network:
             #    if mc.get_status() == "charging":
             #        time_skip = 1
 
-            if (self.t - 1) % 1000 == 0:
+            if (self.t - 1) % 5000 == 0:
                 mi = self.find_min_node()
 
                 avg = 0
@@ -148,7 +148,7 @@ class Network:
                 if cnt_node > 0:
                     cha = cha / cnt_node
 
-                if (self.t - 1) % 1000 == 0:
+                if (self.t - 1) % 5000 == 0:
                     print("\n[Network] Simulating time: {}s, lowest energy node: {:.4f}, used: {:.4f}, charged: {:.4f} at {} (id = {})".format(self.t, self.node[mi].energy, self.node[mi].actual_used, self.node[mi].charged, self.node[mi].location, mi))
                     print('\t\t-----------------------')
                     print("\t\tPrevious lowest node: id = {}, energy = {:.4f}, charge = {:.4f}".format(last_mi, self.node[last_mi].energy, self.node[last_mi].charged))

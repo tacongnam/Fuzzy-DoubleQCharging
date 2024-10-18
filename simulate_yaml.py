@@ -72,7 +72,7 @@ class Simulation:
                 target_pos.append(new_target)
                 target_id += 1
         # print(list_clusters)
-        print('Build Sensors - Build targets: Done')
+        # print('Build Sensors - Build targets: Done')
         list_node = []
 
         # Build connector node
@@ -87,7 +87,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        print('Build Sensors - Build connector node: Done')
+        # print('Build Sensors - Build connector node: Done')
 
         # Build in node
         in_node_data = self.net_argc['InNode']
@@ -101,7 +101,7 @@ class Simulation:
             gen_node.init_inNode()
             list_node.append(gen_node)
         
-        print('Build Sensors - Build in node: Done')
+        # print('Build Sensors - Build in node: Done')
         
         # Build out node
         out_node_data = self.net_argc['OutNode']
@@ -115,7 +115,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        print('Build Sensors - Build out node: Done')
+        # print('Build Sensors - Build out node: Done')
         
         # Build sensor node
         sensor_node_data = self.net_argc['SensorNode']
@@ -129,7 +129,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        print('Build Sensors - Build sensor node: Done')
+        # print('Build Sensors - Build sensor node: Done')
         
         # Build relay node
         relay_node_data = self.net_argc['RelayNode']
@@ -144,7 +144,7 @@ class Simulation:
             
             list_node.append(gen_node)
 
-        print('Build Sensors - Build relay node: Done')
+        # print('Build Sensors - Build relay node: Done')
 
         list_sorted = sorted(list_node, key=lambda x: x.cluster_id, reverse=True)
 
@@ -165,11 +165,17 @@ class Simulation:
         result.writeheader()
         
         life_time = []
+
+        # Initialize Test case
+        para.e_weight = 6
+        test_begin = 0
+        test_end = 6
         
         for nb_run in range(run_times):
             random.seed(nb_run)
 
             print("[Simulator] Repeat ", nb_run, ":")
+            print("Energy weight: ", para.e_weight)
 
             # Initialize Sensor Nodes and Targets
             list_node, target_pos, list_clusters = self.buildSensor()
@@ -177,23 +183,29 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < 1:
+                if nb_run < test_begin + 2:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
                     mc_list.append(mc)
 
+
             # Construct Network
             net_log_file = "log/network_log_new_network_{}.csv".format(nb_run)
             MC_log_file = "log/MC_log_new_network_{}.csv".format(nb_run)
-            experiment = "{}".format(nb_run)
+            experiment = "{}_eweight_{}".format(nb_run, para.e_weight)
             net = Network(list_node=list_node, mc_list=mc_list, target=target_pos, experiment=experiment, com_range=self.com_range, list_clusters=list_clusters)
 
             # self.PrintOutput(net)
             
             # Initialize Q-learning Optimizer
             q_learning = Q_learningv2(net=net, nb_action=self.clusters, alpha=self.alpha, q_alpha=self.q_alpha, q_gamma=self.q_gamma)
+
+            if nb_run == test_end:
+                para.e_weight += 1
+                test_begin = test_end + 1
+                test_end = test_begin + 6
         
             print("[Simulator] Initializing experiment, repetition {}:\n".format(nb_run))
             print("[Simulator] Network:")
@@ -277,8 +289,8 @@ print(r"""
     
     """)
 
-print("Double Q - 3x all connector")
+print("Double Q - all connector - 6x-10x")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
-p.runSimulator(6, 108000)
+p.runSimulator(20, 108000)

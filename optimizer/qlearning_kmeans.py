@@ -52,8 +52,8 @@ class Q_learningv2:
         else:
             charging_time = self.charging_time[mc.state]
         
-        if charging_time > 1:
-            print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
+        # if charging_time > 1:
+        #    print("[Optimizer] MC #{} is sent to point {} (id={}) and charge for {:.2f}s".format(mc.id, self.action_list[mc.state], mc.state, charging_time))
 
         # print(self.charging_time)
         return self.action_list[mc.state], charging_time
