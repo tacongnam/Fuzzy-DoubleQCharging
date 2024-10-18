@@ -289,8 +289,8 @@ print(r"""
     
     """)
 
-print("Double Q - all connector - 6x-10x")
+print("Double Q - all connector - 6x-7x")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
-p.runSimulator(20, 108000)
+p.runSimulator(14, 108000)
