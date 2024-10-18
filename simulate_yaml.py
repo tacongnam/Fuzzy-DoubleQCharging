@@ -167,7 +167,7 @@ class Simulation:
         life_time = []
 
         # Initialize Test case
-        para.e_weight = 6
+        para.e_weight = 4
         test_begin = 0
         test_end = 6
         
@@ -289,7 +289,7 @@ print(r"""
     
     """)
 
-print("Double Q - all connector - 6x-7x")
+print("Double Q - all connector - 4x-5x")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
