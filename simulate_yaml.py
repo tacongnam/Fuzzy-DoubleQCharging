@@ -42,6 +42,7 @@ class Simulation:
         self.prob = self.net_argc['node_phy_spe']['prob_gp']
         self.nb_mc = 3
         self.clusters = 80
+        para.n_clusters = self.clusters + 1
         self.package_size = self.net_argc['node_phy_spe']['package_size']
         self.alpha = 0.1
         self.q_alpha = 0.5
@@ -169,7 +170,7 @@ class Simulation:
         # Initialize Test case
         para.e_weight = 4
         test_begin = 0
-        test_end = 6
+        test_end = 4
         
         for nb_run in range(run_times):
             random.seed(nb_run)
@@ -183,7 +184,7 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < test_begin + 2:
+                if nb_run < test_begin + 1:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
@@ -205,7 +206,7 @@ class Simulation:
             if nb_run == test_end:
                 para.e_weight += 1
                 test_begin = test_end + 1
-                test_end = test_begin + 6
+                test_end = test_begin + 4
         
             print("[Simulator] Initializing experiment, repetition {}:\n".format(nb_run))
             print("[Simulator] Network:")
@@ -293,4 +294,4 @@ print("Double Q - all connector - 4x-5x")
 
 p = Simulation('data/hanoi1000n50_allconnect.yaml')
 p.makeNetwork()
-p.runSimulator(14, 108000)
+p.runSimulator(10, 108000)
