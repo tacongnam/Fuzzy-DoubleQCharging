@@ -32,7 +32,7 @@ def reward_function(network, mc, q_learning, state, time_stem):
     first = np.sum(e * p / E)
     return first, second, third, charging_time
 
-def init_function(nb_action=81):
+def init_function(nb_action=para.n_clusters):
     return np.zeros((nb_action + 1, nb_action + 1), dtype=float)
 
 def get_weight(net, mc, q_learning, action_id, charging_time):
@@ -98,10 +98,11 @@ def get_charge_per_sec(net, q_learning, state):
 def FLCDS_model(network=None):
     max_energy = network.node[0].energy_max
     
-    E_min = ctrl.Antecedent(np.linspace(0, max_energy, num = 1001), 'E_min')
+    E_min = ctrl.Antecedent(np.linspace(0, max_energy, num = 10001), 'E_min')
     L_r = ctrl.Antecedent(np.arange(0, len(network.node) + 1), 'L_r')
     Theta = ctrl.Consequent(np.linspace(0, 1, num = 101), 'Theta')
 
+    #L_r['VL'] = fuzz.trapmf(L_r.universe, [0, 0, 0, 0])
     L_r['L'] = fuzz.trapmf(L_r.universe, [0, 0, 2, 6])
     L_r['M'] = fuzz.trimf(L_r.universe, [2, 6, 10])
     L_r['H'] = fuzz.trapmf(L_r.universe, [6, 10, len(network.node), len(network.node)])
@@ -114,6 +115,10 @@ def FLCDS_model(network=None):
     Theta['L'] = fuzz.trimf(Theta.universe, [0, 1/3, 2/3])
     Theta['M'] = fuzz.trimf(Theta.universe, [1/3, 2/3, 1])
     Theta['H'] = fuzz.trimf(Theta.universe, [2/3, 1, 1])
+
+    #R0_a = ctrl.Rule(L_r['VL'] & E_min['H'], Theta['H'])
+    #R0_b = ctrl.Rule(L_r['VL'] & E_min['M'], Theta['M'])
+    #R0_c = ctrl.Rule(L_r['VL'] & E_min['L'], Theta['L'])
 
     R1 = ctrl.Rule(L_r['L'] & E_min['L'], Theta['H'])
     R2 = ctrl.Rule(L_r['L'] & E_min['M'], Theta['M'])
@@ -136,8 +141,15 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     time_move = distance.euclidean(mc.current, q_learning.action_list[state]) / mc.velocity
 
     # request_id = [request["id"] for request in network.mc.list_request]
-    FLCDS = q_learning.FLCDS    
-    L_r_crisp = len(q_learning.list_request)
+    FLCDS = q_learning.FLCDS
+
+    energy_threshold = 0.4 * network.node[0].energy_max
+
+    L_r_crisp = 0 #len(q_learning.list_request)
+    for node in network.node:
+        if node.energy <= energy_threshold:
+            L_r_crisp += 1
+
     E_min_crisp = network.node[network.find_min_node()].energy
 
     FLCDS.input['L_r'] = L_r_crisp
@@ -146,7 +158,7 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
     alpha = FLCDS.output['Theta']
     q_learning.alpha = alpha
 
-    energy_min = np.max([0.4 * network.node[0].energy_max + alpha * (network.node[0].energy_max - 0.4 * network.node[0].energy_max),
+    energy_min = np.max([energy_threshold + alpha * (network.node[0].energy_max - energy_threshold),
                          E_min_crisp + alpha * (network.node[0].energy_max - E_min_crisp)])
     
     s1 = []  # list of node in request list which has positive charge
@@ -191,7 +203,7 @@ def get_charging_time(network=None, mc = None, q_learning=None, time_stem=0, sta
         return t[arg_min]
     return 0
 
-def network_clustering(optimizer, network=None, nb_cluster=81):
+def network_clustering(optimizer, network=None, nb_cluster=para.n_clusters):
     X = []
     Y = []
     for node in network.node:
@@ -214,7 +226,8 @@ def network_clustering(optimizer, network=None, nb_cluster=81):
     network_plot(network=network, charging_pos=charging_pos)
     return charging_pos
 
-def network_clustering_v2(optimizer, network=None, nb_cluster=81):
+
+def network_clustering_v2(optimizer, network=None, nb_cluster=para.n_clusters):
     X = []
     Y = []
     min_node = 1000

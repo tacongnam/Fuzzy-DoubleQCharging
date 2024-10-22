@@ -42,6 +42,7 @@ class Simulation:
         self.prob = self.net_argc['node_phy_spe']['prob_gp']
         self.nb_mc = 3
         self.clusters = 80
+        para.n_clusters = self.clusters + 1
         self.package_size = self.net_argc['node_phy_spe']['package_size']
         self.alpha = 0.1
         self.q_alpha = 0.5
@@ -183,11 +184,11 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < test_begin + 2:
+                if nb_run < test_begin + 1:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
-                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=True)
+                    mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
 
 
@@ -197,7 +198,7 @@ class Simulation:
             experiment = "{}_eweight_{}".format(nb_run, para.e_weight)
             net = Network(list_node=list_node, mc_list=mc_list, target=target_pos, experiment=experiment, com_range=self.com_range, list_clusters=list_clusters)
 
-            # self.PrintOutput(net)
+            # self.PrintOutput(net) 
             
             # Initialize Q-learning Optimizer
             q_learning = Q_learningv2(net=net, nb_action=self.clusters, alpha=self.alpha, q_alpha=self.q_alpha, q_gamma=self.q_gamma)

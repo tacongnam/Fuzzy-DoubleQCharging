@@ -1,6 +1,5 @@
 from scipy.spatial import distance
 
-
 def get_location(mc):
     d = distance.euclidean(mc.start, mc.end)
     time_move = d / mc.velocity
