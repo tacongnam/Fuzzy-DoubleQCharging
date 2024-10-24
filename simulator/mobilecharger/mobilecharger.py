@@ -7,7 +7,7 @@ from simulator.network import parameter as para
 
 class MobileCharger:
     def __init__(self, id, energy=None, e_move=None, start=para.depot, end=para.depot, velocity=None,
-                 e_self_charge=None, capacity=None, depot_state=80, double_q=True):
+                 e_self_charge=None, capacity=None, depot_state=para.n_clusters - 1, double_q=True):
         self.id = id
         self.is_stand = False  # is true if mc stand and charge
         self.is_self_charge = False  # is true if mc is charged

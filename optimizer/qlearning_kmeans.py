@@ -6,7 +6,7 @@ from simulator.node.utils import find_receiver
 from simulator.network import parameter as para
 
 class Q_learningv2:
-    def __init__(self, net, init_func=init_function, nb_action=80, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
+    def __init__(self, net, init_func=init_function, nb_action=para.n_clusters - 1, alpha=0, q_alpha=0.5, q_gamma=0.5, load_checkpoint=False):
         self.action_list = []
         self.nb_action = nb_action
         self.q_table = init_func(nb_action=nb_action)

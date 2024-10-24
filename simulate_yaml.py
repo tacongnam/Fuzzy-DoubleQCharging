@@ -42,6 +42,7 @@ class Simulation:
         self.prob = self.net_argc['node_phy_spe']['prob_gp']
         self.nb_mc = 3
         self.clusters = 80
+        para.n_clusters = self.clusters + 1
         self.package_size = self.net_argc['node_phy_spe']['package_size']
         self.alpha = 0.1
         self.q_alpha = 0.5
@@ -49,7 +50,7 @@ class Simulation:
         self.energy = self.net_argc['node_phy_spe']['capacity']
         self.energy_max = self.net_argc['node_phy_spe']['capacity']
         self.node_pos = self.net_argc['nodes']
-        self.energy_thresh = 0.9 * self.energy #net_argc['node_phy_spe']['threshold']  
+        self.energy_thresh = 0.4 * self.energy #net_argc['node_phy_spe']['threshold']  
 
         self.double_q = True
         #dq = input("Double Q Learning or not? Y / N: ")
@@ -150,7 +151,7 @@ class Simulation:
 
         return list_sorted, target_pos, list_clusters
 
-    def runSimulator(self, run_times, E_mc):
+    def runSimulator(self, run_times, E_mc, first_e_weight, num_test):
         try:
             os.makedirs('log')
         except FileExistsError:
@@ -167,9 +168,9 @@ class Simulation:
         life_time = []
 
         # Initialize Test case
-        para.e_weight = 6
+        para.e_weight = first_e_weight
         test_begin = 0
-        test_end = 6
+        test_end = num_test
         
         for nb_run in range(run_times):
             random.seed(nb_run)
@@ -183,7 +184,7 @@ class Simulation:
             # Initialize Mobile Chargers
             mc_list = []
             for id in range(self.nb_mc):
-                if nb_run < test_begin + 2:
+                if nb_run < test_begin + 1:
                     mc = MobileCharger(id, energy=E_mc, capacity=E_mc, e_move=1, e_self_charge=540, velocity=5, depot_state = self.clusters, double_q=False)
                     mc_list.append(mc)
                 else:
@@ -205,7 +206,7 @@ class Simulation:
             if nb_run == test_end:
                 para.e_weight += 1
                 test_begin = test_end + 1
-                test_end = test_begin + 6
+                test_end = test_begin + num_test
         
             print("[Simulator] Initializing experiment, repetition {}:\n".format(nb_run))
             print("[Simulator] Network:")
@@ -275,7 +276,14 @@ class Simulation:
         plt.show()
     # plt.savefig()
 
-print(r"""
+
+def main():
+    # Check if the number of arguments is correct
+    if len(sys.argv) != 4:
+        print("Usage: python simulate_yaml.py <param1> <param2> <param3>")
+        sys.exit(1)
+
+    print(r"""
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
  █████   ███   █████ ███████████    █████████  ██████   █████     █████████   ███                             ████             █████                      
 ░░███   ░███  ░░███ ░░███░░░░░███  ███░░░░░███░░██████ ░░███     ███░░░░░███ ░░░                             ░░███            ░░███                       
@@ -289,8 +297,27 @@ print(r"""
     
     """)
 
-print("Double Q - all connector - 6x-7x")
+    
+    # Get the arguments from the command line
 
-p = Simulation('data/hanoi1000n50_allconnect.yaml')
-p.makeNetwork()
-p.runSimulator(14, 108000)
+    run_test = sys.argv[1]
+    first_e_weight = sys.argv[2]
+    num_test = sys.argv[3]
+
+    # Convert the arguments to integers (if needed)
+    try:
+        run_test = int(run_test)
+        first_e_weight = int(first_e_weight)
+        num_test = int(num_test)
+    except ValueError:
+        print("Both parameters should be integers.")
+        sys.exit(1)
+
+    print("Double Q - all connector - ", first_e_weight, "x")
+
+    p = Simulation('data/hanoi1000n50_allconnect.yaml')
+    p.makeNetwork()
+    p.runSimulator(run_test, 108000, first_e_weight, num_test)
+
+if __name__ == "__main__":
+    main()
