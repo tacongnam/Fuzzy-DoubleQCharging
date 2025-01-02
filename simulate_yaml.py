@@ -24,8 +24,6 @@ def run_weight(a1, a2, b1, b2, c1, c2, testcase):
 
                 net = p.runSimulator(1, 54000, 1, 1)
 
-                print(net.t)
-
 def main():
     print(r"""
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -41,12 +39,6 @@ def main():
     
     """)
      
-    
-    if len(sys.argv) != 5   :
-        print("Usage: python simulate_yaml.py <type> <param1> <param2> <param3>")
-        sys.exit(1)
-    else:
-        print("OK!")
     
     run_type = sys.argv[1]
     param1 = float(sys.argv[2])
