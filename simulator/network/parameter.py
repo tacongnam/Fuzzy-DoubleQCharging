@@ -12,3 +12,7 @@ prob = 1.0
 E_mc_thresh = 10
 n_clusters = 81
 e_weight = 1
+
+e_weight_a = 1
+e_weight_b = 1
+e_weight_c = 1
